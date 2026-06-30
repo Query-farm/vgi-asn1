@@ -1,0 +1,33 @@
+[workspace]
+resolver = "2"
+members = ["crates/asn1-core", "crates/asn1-worker"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+license = "MIT"
+authors = ["Query Farm LLC <hello@query.farm>"]
+repository = "https://github.com/Query-farm/vgi-asn1"
+
+[workspace.dependencies]
+# VGI Rust SDK (worker side), published on crates.io. Pulls in vgi-rpc 0.7 and
+# arrow 59 transitively; keep arrow/vgi-rpc here in lockstep with vgi's pins so a
+# single arrow/vgi-rpc resolves.
+vgi = "0.9.5"
+vgi-rpc = { version = "0.7.0", default-features = false, features = ["macros", "http"] }
+arrow-array = "59"
+arrow-buffer = "59"
+arrow-schema = "59"
+
+asn1-core = { path = "crates/asn1-core" }
+
+serde_json = "1"
+base64 = "0.22"
+sha2 = "0.10"
+
+[profile.release]
+opt-level = 2
+# Strip symbols + debug info from the release binary. The worker has no need for
+# in-binary backtraces in production; build a debug profile locally for symbols.
+strip = true

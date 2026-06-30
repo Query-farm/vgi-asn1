@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # Allow release.yml / docker-publish.yml to run this exact suite as a gating
+  # `uses:` job before they publish anything.
+  workflow_call:
+
+concurrency:
+  # Include github.workflow so a direct CI run and the `uses:`-embedded CI jobs
+  # of release.yml / docker-publish.yml land in DISTINCT groups. Sharing one
+  # group made the two tag-triggered callers cancel each other (cancel-in-
+  # progress). In a reusable workflow github.workflow resolves to the CALLER.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build-test:
+    name: fmt · clippy · build · unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Unit + integration tests
+        run: cargo test --workspace --all-features
+
+      - name: Build worker (release)
+        run: cargo build --release --bin asn1-worker
+
+  # Resolve the latest published haybarn release once, so the whole matrix tests
+  # the same version (and we never hardcode/pin it).
+  resolve-haybarn:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.r.outputs.release }}
+    steps:
+      - id: r
+        run: |
+          REL=$(gh release view --repo Query-farm-haybarn/haybarn --json tagName --jq .tagName)
+          echo "release=$REL" >> "$GITHUB_OUTPUT"
+          echo "Latest haybarn release: $REL"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  integration:
+    # SQL end-to-end across every transport the vgi extension supports. The SAME
+    # test/sql/*.test suite runs three ways — the only difference is the LOCATION
+    # the .test files ATTACH (ci/run-integration.sh sets VGI_ASN1_WORKER per
+    # transport): subprocess = the stdio worker binary DuckDB spawns; http =
+    # `asn1-worker --http` (auto port, advertises PORT:<n>); unix = `asn1-worker
+    # --unix <sock>` (advertises UNIX:<sock>).
+    name: SQL E2E (${{ matrix.transport }}) · ${{ matrix.os }}
+    needs: resolve-haybarn
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        transport: [subprocess, http, unix]
+        include:
+          - { os: ubuntu-latest, asset: haybarn_unittest-linux-amd64.zip }
+          - { os: macos-latest,  asset: haybarn_unittest-osx-arm64.zip }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build worker (release)
+        # The `http` transport needs the `vgi-rpc` `http` feature; the workspace
+        # already pins `vgi-rpc = { features = ["macros", "http"] }` (and the SDK
+        # `vgi` crate enables HTTP via that), so a plain release build serves all
+        # three transports — no extra cargo features required here.
+        run: cargo build --release --bin asn1-worker
+
+      - name: Download haybarn-unittest
+        run: |
+          gh release download "$HAYBARN_RELEASE" \
+            --repo Query-farm-haybarn/haybarn \
+            --pattern '${{ matrix.asset }}' \
+            --output haybarn-unittest.zip --clobber
+          mkdir -p hb && unzip -o -q haybarn-unittest.zip -d hb
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HAYBARN_RELEASE: ${{ needs.resolve-haybarn.outputs.release }}
+
+      - name: Resolve runner + worker paths
+        run: |
+          # Absolute paths: run-integration.sh cd's into a staging dir before
+          # invoking the runner, so relative paths would not resolve. WORKER_BIN
+          # is the compiled binary — used directly as the subprocess LOCATION and
+          # launched in --http / --unix mode for those transports.
+          UNITTEST="$PWD/$(find hb -name 'haybarn-unittest' -type f | head -1)"
+          chmod +x "$UNITTEST"
+          echo "HAYBARN_UNITTEST=$UNITTEST" >> "$GITHUB_ENV"
+          echo "WORKER_BIN=$PWD/target/release/asn1-worker" >> "$GITHUB_ENV"
+
+      - name: Run extension integration suite (${{ matrix.transport }})
+        run: ci/run-integration.sh
+        env:
+          TRANSPORT: ${{ matrix.transport }}
+
+  metadata-quality:
+    name: metadata quality (vgi-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build worker (release)
+        run: cargo build --release --bin asn1-worker
+
+      - name: vgi-lint
+        uses: Query-farm/vgi-lint-check@v1
+        with:
+          version: "0.37.0"
+          location: "${{ github.workspace }}/target/release/asn1-worker"
+          fail-on: info

@@ -1,0 +1,67 @@
+# name: test/sql/structural.test
+# group: [vgi_asn1]
+#
+# Structural decoders: SNMP / LDAP JSON projections + the LATERAL fan-out table
+# functions (snmp_varbinds, ldap_messages) and the pem_decode producer. Fixtures
+# are passed as from_hex(); assertions use plain string `contains` so no JSON
+# extension is required.
+
+require-env VGI_ASN1_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'asn1' AS asn1 (TYPE vgi, LOCATION '${VGI_ASN1_WORKER}');
+
+statement ok
+SET search_path = 'asn1.main';
+
+# --- SNMP v2c GetResponse, varbind sysDescr.0 = "RouterOS" ---
+
+query T
+SELECT contains(snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')), '"community":"public"');
+----
+true
+
+query T
+SELECT contains(snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')), '"pdu_type":"GetResponse"');
+----
+true
+
+# snmp_varbinds fans the PDU into one row per varbind (literal/scalar arg form;
+# the vgi binder accepts literal/scalar params, not correlated LATERAL columns).
+query TTT
+SELECT oid, type, oid_name
+FROM asn1.main.snmp_varbinds(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53'));
+----
+1.3.6.1.2.1.1.1.0	OCTET STRING	sysDescr.0
+
+# --- LDAP SearchRequest, filter (uid=jdoe) ---
+
+query T
+SELECT contains(ldap_decode(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')), '"filter":"(uid=jdoe)"');
+----
+true
+
+# ldap_messages fans the segment into one row per message (literal/scalar arg).
+query TT
+SELECT op, filter
+FROM asn1.main.ldap_messages(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e'));
+----
+SearchRequest	(uid=jdoe)
+
+# --- PEM decode (producer table function) ---
+
+query IT
+SELECT idx, label FROM asn1.main.pem_decode('-----BEGIN CERTIFICATE-----
+AQID
+-----END CERTIFICATE-----');
+----
+0	CERTIFICATE
+
+statement ok
+USE memory;
+
+statement ok
+DETACH asn1;

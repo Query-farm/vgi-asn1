@@ -1,0 +1,15 @@
+# vgi-lint configuration for the vgi-asn1 worker.
+#
+# The metadata-quality gate runs in CI via the reusable
+# `Query-farm/vgi-lint-check@v1` action against the built worker binary at
+# `--fail-on info` (see .github/workflows/ci.yml). This file pins the same
+# strictness locally so `vgi-lint` run by hand matches CI.
+#
+#   vgi-lint --location ./target/release/asn1-worker --fail-on info
+
+# Treat info-level findings (and above) as failures — every catalog/schema/
+# function object must carry complete discovery + per-argument documentation.
+fail_on = "info"
+
+# The worker advertises catalog/schema `source_url` (VGI139) on the catalog
+# object and per-argument docs on every function; no rules are suppressed.

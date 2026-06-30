@@ -1,0 +1,17 @@
+[package]
+name = "asn1-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Pure ASN.1 BER/CER/DER TLV codec, OID registry, and structural decoders (SNMP/Kerberos/LDAP/CMS/PKCS/OCSP) — the engine behind the vgi-asn1 VGI worker"
+
+[dependencies]
+serde_json.workspace = true
+base64.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+proptest = "1"

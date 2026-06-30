@@ -1,0 +1,113 @@
+# name: test/sql/generic.test
+# group: [vgi_asn1]
+#
+# Generic ASN.1 codec scalars: decode / to_json / dump / oids / oid_name / oid /
+# is_valid / well_formed / asn1_version. Fixtures are passed as from_hex() so the
+# suite needs no external files. Uses `LOAD vgi` (never `require vgi`).
+
+require-env VGI_ASN1_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'asn1' AS asn1 (TYPE vgi, LOCATION '${VGI_ASN1_WORKER}');
+
+statement ok
+SET search_path = 'asn1.main';
+
+# SEQUENCE { INTEGER 5, OID sha256WithRSAEncryption, UTF8String "hi" }
+# decode() returns the clean nested JSON projection.
+query T
+SELECT decode(from_hex('301202010506092a864886f70d01010b0c026869'));
+----
+[5,"1.2.840.113549.1.1.11","hi"]
+
+# NULL input → NULL.
+query T
+SELECT decode(NULL);
+----
+NULL
+
+# OID registry round-trips.
+query T
+SELECT oid_name('1.2.840.113549.1.1.11');
+----
+sha256WithRSAEncryption
+
+query T
+SELECT oid('id-at-commonName');
+----
+2.5.4.3
+
+# Unknown OID → NULL.
+query T
+SELECT oid_name('1.2.3.4.5.6.7.8');
+----
+NULL
+
+# OID inventory: one OID in the blob.
+query I
+SELECT len(oids(from_hex('301202010506092a864886f70d01010b0c026869')));
+----
+1
+
+# to_json is self-describing (mentions the tag name).
+query T
+SELECT contains(to_json(from_hex('301202010506092a864886f70d01010b0c026869')), 'SEQUENCE');
+----
+true
+
+# dump mirrors openssl asn1parse.
+query T
+SELECT contains(dump(from_hex('301202010506092a864886f70d01010b0c026869')), 'OBJECT IDENTIFIER');
+----
+true
+
+# Validation: a minimal INTEGER is valid DER.
+query T
+SELECT is_valid(from_hex('020105'), 'der');
+----
+true
+
+# well_formed classifies a length-overflow.
+query T
+SELECT (well_formed(from_hex('300502'))).ok;
+----
+false
+
+query T
+SELECT (well_formed(from_hex('300502'))).kind;
+----
+length-overflow
+
+# well_formed never errors — a hostile length claim is captured, not raised.
+query T
+SELECT (well_formed(from_hex('0484ffffffff'))).kind;
+----
+length-overflow
+
+# Version is reported.
+query T
+SELECT asn1_version() IS NOT NULL;
+----
+true
+
+# tlv() flattens to the node list (root SEQUENCE + 3 children = 4 nodes).
+query I
+SELECT len(tlv(from_hex('301202010506092a864886f70d01010b0c026869')));
+----
+4
+
+# to_der canonicalizes BER indefinite length to definite DER, and round-trips
+# through decode: SEQUENCE { OCTET STRING "Hi" } → ["SGk"] (base64url of 0x4869).
+query T
+SELECT decode(to_der(from_hex('3080040248690000')));
+----
+["SGk"]
+
+statement ok
+USE memory;
+
+statement ok
+DETACH asn1;
