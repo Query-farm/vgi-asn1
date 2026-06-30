@@ -84,15 +84,31 @@ impl ScalarFunction for Decode {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let (description, example_sql, example_desc) = if self.two {
+            (
+                "Decode a BER/CER/DER blob to JSON with an explicit output `mode` ∈ {auto, struct, \
+                 json, tlv}: auto/struct/json return the nested typed JSON projection; tlv returns \
+                 the flat TLV-node list. NULL → NULL; a malformed blob yields {error,kind}.",
+                "SELECT asn1.main.decode(from_hex('3003020105'), 'tlv') AS nodes;",
+                "Decode a DER `SEQUENCE { INTEGER 5 }` with mode 'tlv' to its flat list of TLV \
+                 nodes (path, class, tag, length, value).",
+            )
+        } else {
+            (
+                "Decode a BER/CER/DER blob to its nested typed JSON projection (the 'auto' mode). \
+                 NULL → NULL; a malformed blob yields {error,kind}. Call the two-argument overload \
+                 to choose a different mode.",
+                "SELECT asn1.main.decode(from_hex('3003020105')) AS decoded;",
+                "Decode a DER `SEQUENCE { INTEGER 5 }` to a nested JSON tree (yields the JSON array \
+                 `[5]`).",
+            )
+        };
         FunctionMetadata {
-            description: "Decode a BER/CER/DER blob to JSON. mode ∈ {auto, struct, json, tlv}: \
-                          auto/struct/json return the nested typed JSON projection; tlv returns \
-                          the flat TLV-node list. NULL → NULL; a malformed blob yields {error,kind}."
-                .into(),
+            description: description.into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.decode(payload) FROM read_blob('a.der');".into(),
-                description: "Decode a DER blob to a nested JSON tree.".into(),
+                sql: example_sql.into(),
+                description: example_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -167,13 +183,14 @@ json_blob_scalar!(
     ToJson,
     "to_json",
     "ASN.1 to Self-Describing JSON",
+    "Project a BER/CER/DER blob into self-describing JSON, one object per TLV node.",
     "Project a BER/CER/DER blob into self-describing JSON: each node carries {class, tag, \
      tag_name, constructed, value}, with OCTET/BIT STRING as base64url, OID as dotted+name, and \
      time as ISO-8601. Always succeeds on a well-formed blob.",
     "Project an ASN.1 blob to self-describing JSON, e.g. `to_json(payload)`.",
     "asn1, to_json, self-describing, ber, der, json, tlv, node, class, tag",
-    "SELECT asn1.main.to_json(payload) FROM read_blob('a.der');",
-    "Project a DER blob into self-describing JSON.",
+    "SELECT asn1.main.to_json(from_hex('3003020105')) AS json;",
+    "Project a DER `SEQUENCE { INTEGER 5 }` into self-describing JSON nodes.",
     "scalar/generic.rs",
     to_json
 );
@@ -190,15 +207,31 @@ impl ScalarFunction for Dump {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let (description, example_sql, example_desc) = if self.two {
+            (
+                "Render an indented human-debug TLV dump of a blob in an explicit `format` ∈ \
+                 {openssl, dumpasn1}: openssl mirrors `openssl asn1parse`; dumpasn1 mirrors \
+                 Gutmann's annotated style with OID names. A malformed blob renders a parse-error \
+                 line, never an error.",
+                "SELECT asn1.main.dump(from_hex('3003020105'), 'dumpasn1') AS text;",
+                "Dump a DER `SEQUENCE { INTEGER 5 }` in dumpasn1 (Gutmann annotated) style.",
+            )
+        } else {
+            (
+                "Render an indented human-debug TLV dump of a blob in the default openssl \
+                 `asn1parse` style (offset, depth, header/length, tag name, primitive value). A \
+                 malformed blob renders a parse-error line, never an error. Pass a second argument \
+                 to choose the 'dumpasn1' style.",
+                "SELECT asn1.main.dump(from_hex('3003020105')) AS text;",
+                "Produce an openssl-asn1parse-style dump of a DER `SEQUENCE { INTEGER 5 }`.",
+            )
+        };
         FunctionMetadata {
-            description: "Render an indented human-debug TLV dump of a blob. format ∈ {openssl, \
-                          dumpasn1}: openssl mirrors `openssl asn1parse`; dumpasn1 mirrors \
-                          Gutmann's annotated style with OID names."
-                .into(),
+            description: description.into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.dump(payload) FROM read_blob('a.der');".into(),
-                description: "Produce an openssl-asn1parse-style dump.".into(),
+                sql: example_sql.into(),
+                description: example_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -286,8 +319,10 @@ impl ScalarFunction for TlvFn {
                 .into(),
             return_type: Some(DataType::List(tlv_list_field())),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.tlv(payload) FROM read_blob('a.der');".into(),
-                description: "List every TLV node of a blob.".into(),
+                sql: "SELECT asn1.main.tlv(from_hex('3003020105')) AS nodes;".into(),
+                description: "List every TLV node of a DER `SEQUENCE { INTEGER 5 }` (the SEQUENCE \
+                              and its child INTEGER)."
+                    .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -352,8 +387,11 @@ impl ScalarFunction for AtPath {
                 .into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.at_path(payload, '$.0') FROM read_blob('a.der');".into(),
-                description: "Pull the value at a node path.".into(),
+                sql: "SELECT asn1.main.at_path(from_hex('3003020105'), '$.0') AS node;".into(),
+                description:
+                    "Pull the node at path '$.0' (the first child — the INTEGER) of a DER \
+                              `SEQUENCE { INTEGER 5 }`."
+                        .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -428,8 +466,12 @@ impl ScalarFunction for Oids {
                 .into(),
             return_type: Some(DataType::List(oid_list_field())),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.oids(data) FROM unknown_blobs;".into(),
-                description: "Inventory every OID used in a blob.".into(),
+                sql: "SELECT asn1.main.oids(from_hex('300d06092a864886f70d01010b0500')) AS oids;"
+                    .into(),
+                description: "Inventory every OID in an AlgorithmIdentifier blob — here \
+                              1.2.840.113549.1.1.11 (sha256WithRSAEncryption), with its resolved \
+                              name and node path."
+                    .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -499,7 +541,7 @@ impl ScalarFunction for OidName {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
-                "OID → Name",
+                "Resolve OID to Friendly Name",
                 "Resolve a dotted OBJECT IDENTIFIER (e.g. '1.2.840.113549.1.1.11') to its friendly \
                  name (e.g. 'sha256WithRSAEncryption') from the bundled registry of signature/digest \
                  algorithms, X.500 attribute types, content types, EKUs, curves, and SNMP/MIB \
@@ -619,15 +661,31 @@ impl ScalarFunction for IsValid {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let (description, example_sql, example_desc) = if self.two {
+            (
+                "Whether a blob is well-formed under an explicit `rules` ∈ {ber, cer, der}; der/cer \
+                 also enforce canonical constraints (minimal lengths, no indefinite length). NULL \
+                 → NULL; a malformed blob returns FALSE, never an error.",
+                "SELECT asn1.main.is_valid(from_hex('3003020105'), 'der') AS valid;",
+                "Check that a DER `SEQUENCE { INTEGER 5 }` is valid under the strict DER rules \
+                 (returns true).",
+            )
+        } else {
+            (
+                "Whether a blob is well-formed under the default DER encoding rules (canonical: \
+                 minimal lengths, no indefinite length). NULL → NULL; a malformed blob returns \
+                 FALSE, never an error. Pass a second argument to validate as 'ber' or 'cer' \
+                 instead.",
+                "SELECT asn1.main.is_valid(from_hex('3003020105')) AS valid;",
+                "Check that a DER `SEQUENCE { INTEGER 5 }` is well-formed (returns true).",
+            )
+        };
         FunctionMetadata {
-            description: "Whether a blob is well-formed under the named encoding rules. rules ∈ \
-                          {ber, cer, der} (default der); der/cer enforce canonical constraints. \
-                          NULL → NULL; never errors."
-                .into(),
+            description: description.into(),
             return_type: Some(DataType::Boolean),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.is_valid(data, 'der') FROM blobs;".into(),
-                description: "Check DER well-formedness.".into(),
+                sql: example_sql.into(),
+                description: example_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -704,8 +762,10 @@ impl ScalarFunction for WellFormed {
                           bad-utf8, nesting-limit, alloc-limit}. Never errors."
                 .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.well_formed(data) FROM unknown_blobs;".into(),
-                description: "Triage well-formedness with a failure kind.".into(),
+                sql: "SELECT asn1.main.well_formed(from_hex('3003020105')) AS w;".into(),
+                description: "Triage a DER `SEQUENCE { INTEGER 5 }`: returns STRUCT(ok=true, \
+                              error=NULL, kind=NULL)."
+                    .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -798,8 +858,11 @@ impl ScalarFunction for ToDer {
                 .into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.to_der(payload) FROM blobs;".into(),
-                description: "Canonicalize captured BER to DER.".into(),
+                sql: "SELECT asn1.main.to_der(from_hex('3003020105')) AS der;".into(),
+                description:
+                    "Canonicalize a blob to DER; an already-canonical `SEQUENCE { INTEGER \
+                              5 }` round-trips to the same bytes."
+                        .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -857,14 +920,30 @@ impl ScalarFunction for Reencode {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let (description, example_sql, example_desc) = if self.two {
+            (
+                "Re-encode a parsed blob to the target rules set named by the second argument \
+                 (currently canonical DER for any 'der'/'cer'/'ber' value). NULL → NULL; a \
+                 malformed blob → NULL.",
+                "SELECT asn1.main.reencode(from_hex('3003020105'), 'der') AS der;",
+                "Re-encode a blob to canonical DER under an explicit 'der' rules set.",
+            )
+        } else {
+            (
+                "Re-encode a parsed blob to canonical DER (definite minimal lengths, sorted SET \
+                 OF). NULL → NULL; a malformed blob → NULL. Pass a second 'rules' argument to name \
+                 the target encoding explicitly.",
+                "SELECT asn1.main.reencode(from_hex('3003020105')) AS der;",
+                "Re-encode a blob to canonical DER (an already-canonical SEQUENCE round-trips \
+                 unchanged).",
+            )
+        };
         FunctionMetadata {
-            description: "Re-encode a parsed blob to a target rules set (currently canonical DER \
-                          for any rules value). NULL → NULL; a malformed blob → NULL."
-                .into(),
+            description: description.into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.reencode(payload, 'der') FROM blobs;".into(),
-                description: "Re-encode to canonical DER.".into(),
+                sql: example_sql.into(),
+                description: example_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -937,12 +1016,16 @@ impl ScalarFunction for PemLabel {
                 .into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.pem_label(armor) FROM pem_texts;".into(),
-                description: "Identify a PEM block's label.".into(),
+                sql: "SELECT asn1.main.pem_label('-----BEGIN CERTIFICATE-----' || chr(10) || \
+                      'MIIBAg==' || chr(10) || '-----END CERTIFICATE-----') AS label;"
+                    .into(),
+                description: "Identify the label of the first PEM block in a text (returns \
+                              'CERTIFICATE')."
+                    .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
-                "PEM Label",
+                "Detect a PEM Block's Label",
                 "Return the label of the first `-----BEGIN <label>-----` block in a PEM text \
                  (e.g. 'CERTIFICATE', 'PRIVATE KEY'), or NULL when the text contains no PEM block. \
                  Use pem_decode() to split a bundle into its DER blocks.",

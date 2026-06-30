@@ -23,14 +23,15 @@ json_blob_scalar!(
     SnmpDecode,
     "snmp_decode",
     "Decode SNMP Message",
+    "Decode an SNMP v1/v2c/v3 message to JSON (version, community, PDU, resolved varbinds).",
     "Decode an SNMP v1/v2c/v3 message (RFC 1157/3416) into a JSON STRUCT: version, community, \
      pdu_type, request_id, error_status, error_index, trap fields, and a varbinds list (each \
      with oid, resolved oid_name, SMI type, and value). The signature/auth envelope is not \
      verified. Returns {error} on a non-SNMP blob.",
     "Decode an SNMP PDU to JSON, e.g. `snmp_decode(payload)`.",
     "snmp, snmp_decode, varbind, trap, pdu, oid, mib, rfc 1157, rfc 3416, network management",
-    "SELECT asn1.main.snmp_decode(payload) FROM snmp_pcap;",
-    "Decode an SNMP message into a JSON struct with resolved varbinds.",
+    "SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg;",
+    "Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.",
     "scalar/security.rs",
     snmp::snmp_decode
 );
@@ -39,13 +40,14 @@ json_blob_scalar!(
     KrbDecode,
     "krb_decode",
     "Decode Kerberos Message",
+    "Decode a Kerberos V5 message to JSON, dispatched on its [APPLICATION n] message tag.",
     "Decode a Kerberos V5 message (RFC 4120) by dispatching on its [APPLICATION n] tag \
      (Ticket, AS-REQ/REP, TGS-REQ/REP, AP-REQ/REP, KRB-ERROR, …) into a JSON projection. \
      Encrypted parts are left as opaque bytes — nothing is decrypted.",
     "Decode a Kerberos message to JSON, e.g. `krb_decode(blob)`.",
     "kerberos, krb5, krb_decode, ticket, AS-REQ, TGS-REP, KRB-ERROR, rfc 4120",
-    "SELECT asn1.main.krb_decode(blob) FROM krb_captures;",
-    "Dispatch and decode a Kerberos message into JSON.",
+    "SELECT asn1.main.krb_decode(from_hex('61073005a003020105')) AS msg;",
+    "Decode an [APPLICATION 1] Kerberos Ticket (tkt-vno 5) into JSON (msg_type 'Ticket').",
     "scalar/security.rs",
     kerberos::krb_decode
 );
@@ -54,13 +56,14 @@ json_blob_scalar!(
     LdapDecode,
     "ldap_decode",
     "Decode LDAP Message",
+    "Decode the first LDAPMessage of a blob to JSON (message_id, protocolOp, dn/filter/…).",
     "Decode the first LDAPMessage of a blob (RFC 4511) into a JSON projection: message_id, the \
      protocolOp name, plus dn / scope / RFC 4515 filter / attributes / result fields as \
      applicable. Use ldap_messages() to fan a multi-message segment into rows.",
     "Decode an LDAP message to JSON, e.g. `ldap_decode(blob)`.",
     "ldap, ldap_decode, bind, search, filter, rfc 4511, rfc 4515, directory",
-    "SELECT asn1.main.ldap_decode(payload) FROM ldap_captures;",
-    "Decode the first LDAP message of a blob into JSON.",
+    "SELECT asn1.main.ldap_decode(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')) AS msg;",
+    "Decode a real LDAP searchRequest into JSON (RFC 4515 filter '(uid=jdoe)').",
     "scalar/security.rs",
     ldap::ldap_decode
 );
@@ -69,13 +72,14 @@ json_blob_scalar!(
     CmsDecode,
     "cms_decode",
     "Decode CMS / PKCS#7",
+    "Decode a CMS / PKCS#7 ContentInfo to JSON (named content_type + dispatched content).",
     "Decode a CMS / PKCS#7 ContentInfo (RFC 5652) into a JSON projection: the named content_type \
      (signedData, envelopedData, TSTInfo, …) and the dispatched content tree. Use cms_signers() / \
      cms_certs() / cms_content() to shred a SignedData. Signatures are surfaced, never verified.",
     "Decode a CMS/PKCS#7 blob to JSON, e.g. `cms_decode(data)`.",
     "cms, pkcs7, cms_decode, signedData, envelopedData, content type, rfc 5652, s/mime, timestamp",
-    "SELECT asn1.main.cms_decode(data) FROM cms_blobs;",
-    "Decode a CMS ContentInfo into JSON, dispatched on its content type.",
+    "SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info;",
+    "Decode a minimal CMS ContentInfo (content_type 'id-data') into JSON.",
     "scalar/security.rs",
     cms::cms_decode
 );
@@ -84,14 +88,15 @@ json_blob_scalar!(
     OcspDecode,
     "ocsp_decode",
     "Decode OCSP Message",
+    "Decode an OCSP request or response to JSON (status, responder, per-cert responses).",
     "Decode an OCSP request or response (RFC 6960) into a JSON projection: response_status, \
      producedAt, responder_id, and a responses list (per-cert serial, issuer hashes, cert_status \
      good/revoked/unknown, revocation time/reason, this/next update). Signature surfaced, not \
      verified.",
     "Decode an OCSP message to JSON, e.g. `ocsp_decode(blob)`.",
     "ocsp, ocsp_decode, revocation, cert status, responder, rfc 6960, pki",
-    "SELECT asn1.main.ocsp_decode(blob) FROM ocsp_responses;",
-    "Decode an OCSP request/response into JSON.",
+    "SELECT asn1.main.ocsp_decode(from_hex('30030a0100')) AS msg;",
+    "Decode a minimal OCSPResponse into JSON (response_status 'successful').",
     "scalar/security.rs",
     ocsp::ocsp_decode
 );
@@ -125,8 +130,11 @@ impl ScalarFunction for KrbTicket {
                           EncTicketPart stays encrypted (etype named, cipher as BLOB)."
                     .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.krb_ticket(blob) FROM tickets;".into(),
-                description: "Project the outer Ticket envelope.".into(),
+                sql: "SELECT asn1.main.krb_ticket(from_hex('61073005a003020105')) AS ticket;"
+                    .into(),
+                description: "Project the outer [APPLICATION 1] Ticket envelope to a STRUCT (here \
+                              tkt_vno = 5; realm/sname/enc-part NULL on this minimal ticket)."
+                    .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -243,8 +251,12 @@ impl ScalarFunction for Pkcs8Info {
                           octets are NEVER surfaced; encrypted keys name their PBES2/PBKDF2 OIDs."
                 .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.pkcs8_info(key) FROM keys;".into(),
-                description: "Inspect a PKCS#8 key's structure without exposing key material."
+                sql:
+                    "SELECT asn1.main.pkcs8_info(from_hex('3016020100300d06092a864886f70d0101010500\
+                      04026869')) AS info;"
+                        .into(),
+                description: "Inspect a minimal PKCS#8 PrivateKeyInfo's structure (version 0, \
+                              algorithm 'rsaEncryption') without exposing key material."
                     .into(),
                 expected_output: None,
             }],
@@ -355,8 +367,14 @@ impl ScalarFunction for CmsCerts {
                 true,
             )))),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.cms_certs(data) FROM cms_blobs;".into(),
-                description: "Extract the embedded certificate chain from a CMS blob.".into(),
+                sql:
+                    "SELECT asn1.main.cms_certs(from_hex('301106092a864886f70d010701a00404026869'))\
+                       AS certs;"
+                        .into(),
+                description:
+                    "Extract the embedded certificate LIST<BLOB> from a CMS blob (an empty \
+                              list for this minimal id-data ContentInfo, which carries no certs)."
+                        .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -422,8 +440,12 @@ impl ScalarFunction for CmsContent {
                 .into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.cms_content(data) FROM cms_blobs;".into(),
-                description: "Extract the signed payload bytes from a CMS blob.".into(),
+                sql: "SELECT asn1.main.cms_content(from_hex('301106092a864886f70d010701a004040268\
+                      69')) AS econtent;"
+                    .into(),
+                description: "Extract the encapsulated eContent BLOB from a CMS SignedData (NULL \
+                              for this minimal id-data ContentInfo, which wraps no SignedData)."
+                    .into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(

@@ -185,6 +185,13 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      SELECT asn1.main.is_valid(from_hex('020105'), 'der');"
                         .to_string(),
                 ),
+                (
+                    "vgi.executable_examples".to_string(),
+                    // Self-contained, must-run walkthrough (verified against the worker).
+                    // Blobs are inlined via from_hex() so each statement runs as written.
+                    r#"[{"name":"decode_generic","description":"Decode a generic DER SEQUENCE { INTEGER 5 } into its nested typed JSON projection.","sql":"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded"},{"name":"resolve_oid","description":"Resolve a dotted OID to its friendly name from the bundled registry.","sql":"SELECT asn1.main.oid_name('1.2.840.113549.1.1.11') AS name"},{"name":"snmp_to_json","description":"Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.","sql":"SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg"},{"name":"cms_content_type","description":"Decode a minimal CMS ContentInfo and read its content type.","sql":"SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info"}]"#
+                        .to_string(),
+                ),
             ],
             views: Vec::new(),
             macros: Vec::new(),

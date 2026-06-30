@@ -4,7 +4,7 @@
 
 /// Generate a scalar `$ty` named `$name` that maps `$func` over a BLOB column.
 macro_rules! json_blob_scalar {
-    ($ty:ident, $name:literal, $title:literal, $llm:literal, $md:literal,
+    ($ty:ident, $name:literal, $title:literal, $desc:literal, $llm:literal, $md:literal,
      $kw:literal, $ex_sql:literal, $ex_desc:literal, $src:literal, $func:path) => {
         pub struct $ty;
 
@@ -15,7 +15,7 @@ macro_rules! json_blob_scalar {
 
             fn metadata(&self) -> vgi::FunctionMetadata {
                 vgi::FunctionMetadata {
-                    description: $llm.into(),
+                    description: $desc.into(),
                     return_type: Some(arrow_schema::DataType::Utf8),
                     examples: vec![vgi::FunctionExample {
                         sql: $ex_sql.into(),
