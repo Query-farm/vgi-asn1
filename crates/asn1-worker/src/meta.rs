@@ -41,21 +41,67 @@ pub fn agent_test_tasks_json(tasks: &[(&str, &str, &str)]) -> String {
     format!("[{}]", items.join(","))
 }
 
-/// Build the four standard per-object discovery/description tags (title, doc_llm,
-/// doc_md, keywords). `_relative_path` is retained for call-site documentation
-/// only — it is no longer emitted as a per-object `vgi.source_url` (catalog-only,
-/// VGI139).
+/// Category names for the schema's `vgi.categories` registry (VGI413). Each
+/// object carries a `vgi.category` naming exactly one of these; the schema
+/// declares the ordered registry via [`categories_json`].
+pub const CAT_GENERIC: &str = "Generic ASN.1";
+pub const CAT_SECURITY: &str = "Security Modules";
+pub const CAT_DIAGNOSTICS: &str = "Diagnostics";
+
+/// The ordered `vgi.categories` registry declared on schema `main` (VGI413): an
+/// array of `{"name","description"}` objects, one per [`CAT_GENERIC`] /
+/// [`CAT_SECURITY`] / [`CAT_DIAGNOSTICS`]. Order is the navigation/listing order.
+pub fn categories_json() -> String {
+    fn esc(s: &str) -> String {
+        s.replace('\\', "\\\\").replace('"', "\\\"")
+    }
+    let cats = [
+        (
+            CAT_GENERIC,
+            "Generic BER/CER/DER codec: decode, dump, walk, inventory OIDs, validate, and \
+             canonicalize any ASN.1 blob, plus PEM extraction and OID name lookup.",
+        ),
+        (
+            CAT_SECURITY,
+            "Structural decoders for the named modules that ride on ASN.1 — SNMP, Kerberos, \
+             LDAP, CMS/PKCS#7, PKCS#8/#12, OCSP — shredding them into JSON and joinable rows.",
+        ),
+        (
+            CAT_DIAGNOSTICS,
+            "Operational introspection of the running worker, such as its version string.",
+        ),
+    ];
+    let items: Vec<String> = cats
+        .iter()
+        .map(|(name, desc)| {
+            format!(
+                "{{\"name\":\"{}\",\"description\":\"{}\"}}",
+                esc(name),
+                esc(desc)
+            )
+        })
+        .collect();
+    format!("[{}]", items.join(","))
+}
+
+/// Build the standard per-object discovery/description tags (title, doc_llm,
+/// doc_md, keywords, category). `category` must name one of the schema's
+/// `vgi.categories` (VGI413); use a `CAT_*` constant. `_relative_path` is
+/// retained for call-site documentation only — it is no longer emitted as a
+/// per-object `vgi.source_url` (catalog-only, VGI139).
 pub fn object_tags(
     title: &str,
     description_llm: &str,
     description_md: &str,
     keywords: &str,
     _relative_path: &str,
+    category: &str,
 ) -> Vec<(String, String)> {
     vec![
         ("vgi.title".to_string(), title.to_string()),
         ("vgi.doc_llm".to_string(), description_llm.to_string()),
         ("vgi.doc_md".to_string(), description_md.to_string()),
         ("vgi.keywords".to_string(), keywords_json(keywords)),
+        ("vgi.category".to_string(), category.to_string()),
     ]
 }

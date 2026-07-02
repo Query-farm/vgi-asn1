@@ -58,6 +58,7 @@ impl TableFunction for SnmpVarbinds {
              `oid`, `oid_name`, `type`, `value`.",
             "snmp, varbind, snmp_varbinds, oid, mib, trap, pdu, shred, rfc 3416",
             "table/snmp_varbinds.rs",
+            crate::meta::CAT_SECURITY,
         );
         tags.push((
             "vgi.result_columns_md".into(),
@@ -82,7 +83,7 @@ impl TableFunction for SnmpVarbinds {
             "blob",
             0,
             "any",
-            "An SNMP message blob (a literal BLOB/VARCHAR or scalar subquery). Fans into one row \
+            "An SNMP message payload (a literal value or scalar subquery). Fans into one row \
              per varbind.",
         )]
     }

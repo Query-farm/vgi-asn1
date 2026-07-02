@@ -2,3 +2,7 @@
 /build
 **/*.rs.bk
 .DS_Store
+
+# vgi-lint --ai / simulate local caches
+.vgi-review-cache.json
+.vgi-sim-cache.json

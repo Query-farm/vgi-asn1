@@ -5,7 +5,7 @@
 /// Generate a scalar `$ty` named `$name` that maps `$func` over a BLOB column.
 macro_rules! json_blob_scalar {
     ($ty:ident, $name:literal, $title:literal, $desc:literal, $llm:literal, $md:literal,
-     $kw:literal, $ex_sql:literal, $ex_desc:literal, $src:literal, $func:path) => {
+     $kw:literal, $ex_sql:literal, $ex_desc:literal, $src:literal, $cat:expr, $func:path) => {
         pub struct $ty;
 
         impl vgi::ScalarFunction for $ty {
@@ -22,7 +22,7 @@ macro_rules! json_blob_scalar {
                         description: $ex_desc.into(),
                         expected_output: None,
                     }],
-                    tags: crate::meta::object_tags($title, $llm, $md, $kw, $src),
+                    tags: crate::meta::object_tags($title, $llm, $md, $kw, $src, $cat),
                     ..Default::default()
                 }
             }
@@ -31,8 +31,8 @@ macro_rules! json_blob_scalar {
                 vec![vgi::ArgSpec::any_column(
                     "blob",
                     0,
-                    "The ASN.1 DER/BER/CER bytes to decode (a BLOB column, or VARCHAR text \
-                     holding the bytes). NULL input yields NULL.",
+                    "The ASN.1 DER/BER/CER bytes to decode — raw binary, or text holding \
+                     those bytes. NULL input yields NULL.",
                 )]
             }
 

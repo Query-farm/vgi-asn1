@@ -66,6 +66,7 @@ impl TableFunction for LdapMessages {
              `attributes`, `result_code`, `matched_dn`, `diagnostic`.",
             "ldap, ldap_messages, bind, search, filter, rfc 4511, rfc 4515, shred",
             "table/ldap_messages.rs",
+            crate::meta::CAT_SECURITY,
         );
         tags.push((
             "vgi.result_columns_md".into(),
@@ -93,7 +94,7 @@ impl TableFunction for LdapMessages {
             "blob",
             0,
             "any",
-            "An LDAP wire blob (literal BLOB/VARCHAR or scalar subquery), possibly several \
+            "An LDAP wire payload (a literal value or scalar subquery), possibly several \
              LDAPMessages back-to-back.",
         )]
     }

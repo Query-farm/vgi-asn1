@@ -151,6 +151,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             tags: vec![
                 ("vgi.title".to_string(), "ASN.1 — main".to_string()),
                 (
+                    "vgi.categories".to_string(),
+                    crate::meta::categories_json(),
+                ),
+                (
                     "vgi.keywords".to_string(),
                     crate::meta::keywords_json(
                         "asn1, ber, der, decode, to_json, dump, tlv, oids, well_formed, snmp, \

@@ -53,6 +53,7 @@ impl TableFunction for PemDecode {
             "Split a PEM bundle into DER blocks. Columns: `idx`, `label`, `der`.",
             "pem, pem_decode, armor, certificate, private key, base64, der, bundle, split",
             "table/pem_decode.rs",
+            crate::meta::CAT_GENERIC,
         );
         tags.push((
             "vgi.result_columns_md".into(),

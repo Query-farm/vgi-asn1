@@ -50,6 +50,7 @@ impl ScalarFunction for Asn1Version {
                 "Return the asn1 worker version, e.g. `asn1_version()` → '0.1.0'.",
                 "version, build version, asn1_version, diagnostics, worker version, semver",
                 "scalar/generic.rs",
+                crate::meta::CAT_DIAGNOSTICS,
             ),
             ..Default::default()
         }
@@ -123,6 +124,7 @@ impl ScalarFunction for Decode {
                 "Decode an ASN.1 blob to JSON, e.g. `decode(payload)` or `decode(payload,'tlv')`.",
                 "asn1, decode, ber, der, cer, tlv, parse, to json, struct, blob, binary",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -132,7 +134,7 @@ impl ScalarFunction for Decode {
         let mut specs = vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 DER/BER/CER bytes to decode (BLOB, or VARCHAR text holding the bytes).",
+            "The ASN.1 DER/BER/CER bytes to decode — raw binary, or text holding those bytes.",
         )];
         if self.two {
             specs.push(ArgSpec::const_arg(
@@ -192,6 +194,7 @@ json_blob_scalar!(
     "SELECT asn1.main.to_json(from_hex('3003020105')) AS json;",
     "Project a DER `SEQUENCE { INTEGER 5 }` into self-describing JSON nodes.",
     "scalar/generic.rs",
+    crate::meta::CAT_GENERIC,
     to_json
 );
 
@@ -246,6 +249,7 @@ impl ScalarFunction for Dump {
                  `dump(payload,'dumpasn1')`.",
                 "asn1, dump, asn1parse, openssl, dumpasn1, tlv, triage, debug, hex",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -255,7 +259,7 @@ impl ScalarFunction for Dump {
         let mut specs = vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 DER/BER/CER bytes to dump (BLOB, or VARCHAR text holding the bytes).",
+            "The ASN.1 DER/BER/CER bytes to render — raw binary, or text holding those bytes.",
         )];
         if self.two {
             specs.push(ArgSpec::const_arg(
@@ -335,6 +339,7 @@ impl ScalarFunction for TlvFn {
                 "List the TLV nodes of a blob, e.g. `tlv(payload)`.",
                 "asn1, tlv, nodes, path, class, tag, length, walk, structure, ber, der",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -344,7 +349,8 @@ impl ScalarFunction for TlvFn {
         vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 DER/BER/CER bytes to walk (BLOB, or VARCHAR text holding the bytes).",
+            "The ASN.1 DER/BER/CER bytes to walk into a flat node list — raw binary, or text \
+             holding those bytes.",
         )]
     }
 
@@ -403,6 +409,7 @@ impl ScalarFunction for AtPath {
                 "Get the value at a node path, e.g. `at_path(payload, '$.0.2')`.",
                 "asn1, at_path, path, jsonpath, node, navigate, extract, ber, der",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -413,7 +420,8 @@ impl ScalarFunction for AtPath {
             ArgSpec::any_column(
                 "blob",
                 0,
-                "The ASN.1 DER/BER/CER bytes to navigate (BLOB, or VARCHAR text).",
+                "The ASN.1 DER/BER/CER bytes to navigate — raw binary, or text holding those \
+                 bytes.",
             ),
             ArgSpec::column_typed(
                 "path",
@@ -484,6 +492,7 @@ impl ScalarFunction for Oids {
                 "Inventory the OIDs in a blob, e.g. `oids(data)`.",
                 "asn1, oids, object identifier, inventory, algorithm, signature, audit, join",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -493,7 +502,8 @@ impl ScalarFunction for Oids {
         vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 DER/BER/CER bytes to inventory (BLOB, or VARCHAR text).",
+            "The ASN.1 DER/BER/CER bytes to inventory for OBJECT IDENTIFIERs — raw binary, or \
+             text holding those bytes.",
         )]
     }
 
@@ -549,6 +559,7 @@ impl ScalarFunction for OidName {
                 "Resolve a dotted OID to a name, e.g. `oid_name('2.5.4.3')` → 'id-at-commonName'.",
                 "oid, oid_name, object identifier, name, resolve, registry, algorithm",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -559,8 +570,8 @@ impl ScalarFunction for OidName {
             "oid",
             0,
             DataType::Utf8,
-            "A dotted-decimal OID, e.g. '1.2.840.113549.1.1.11'. Resolved to its friendly name; \
-             NULL if not in the registry.",
+            "A dotted OID, e.g. '1.2.840.113549.1.1.11'. Resolved to its friendly name; NULL if \
+             not in the registry.",
         )]
     }
 
@@ -612,6 +623,7 @@ impl ScalarFunction for OidFn {
                 "Resolve a name to a dotted OID, e.g. `oid('id-at-commonName')` → '2.5.4.3'.",
                 "oid, name to oid, object identifier, dotted, resolve, registry, lookup",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -698,6 +710,7 @@ impl ScalarFunction for IsValid {
                 "Check a blob's well-formedness under encoding rules, e.g. `is_valid(data,'der')`.",
                 "asn1, is_valid, validate, der, ber, cer, canonical, well-formed",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -707,7 +720,7 @@ impl ScalarFunction for IsValid {
         let mut specs = vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 bytes to validate (BLOB, or VARCHAR text holding the bytes).",
+            "The ASN.1 bytes to validate — raw binary, or text holding those bytes.",
         )];
         if self.two {
             specs.push(ArgSpec::const_arg(
@@ -779,6 +792,7 @@ impl ScalarFunction for WellFormed {
                 "Triage a blob's well-formedness with a failure kind, e.g. `well_formed(data)`.",
                 "asn1, well_formed, validate, error kind, truncated, length overflow, triage, robust",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -788,7 +802,8 @@ impl ScalarFunction for WellFormed {
         vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 bytes to check (BLOB, or VARCHAR text). NULL yields a NULL struct.",
+            "The ASN.1 bytes to check — raw binary, or text holding those bytes. NULL yields a \
+             NULL struct.",
         )]
     }
 
@@ -875,6 +890,7 @@ impl ScalarFunction for ToDer {
                 "Re-encode a blob to canonical DER, e.g. `to_der(payload)`.",
                 "asn1, to_der, canonical, der, reencode, normalize, fingerprint, ber to der",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -884,7 +900,8 @@ impl ScalarFunction for ToDer {
         vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 bytes to canonicalize (BLOB, or VARCHAR text). NULL/malformed → NULL.",
+            "The ASN.1 bytes to canonicalize — raw binary, or text holding those bytes. \
+             NULL/malformed → NULL.",
         )]
     }
 
@@ -955,6 +972,7 @@ impl ScalarFunction for Reencode {
                 "Re-encode a blob to a rules set, e.g. `reencode(payload, 'der')`.",
                 "asn1, reencode, der, ber, cer, canonical, normalize, rules",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }
@@ -964,7 +982,8 @@ impl ScalarFunction for Reencode {
         let mut specs = vec![ArgSpec::any_column(
             "blob",
             0,
-            "The ASN.1 bytes to re-encode (BLOB, or VARCHAR text). NULL/malformed → NULL.",
+            "The ASN.1 bytes to re-encode — raw binary, or text holding those bytes. \
+             NULL/malformed → NULL.",
         )];
         if self.two {
             specs.push(ArgSpec::const_arg(
@@ -1032,6 +1051,7 @@ impl ScalarFunction for PemLabel {
                 "Get the first PEM block's label, e.g. `pem_label(armor)` → 'CERTIFICATE'.",
                 "pem, pem_label, armor, begin, certificate, private key, label",
                 "scalar/generic.rs",
+                crate::meta::CAT_GENERIC,
             ),
             ..Default::default()
         }

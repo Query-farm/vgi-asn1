@@ -33,6 +33,7 @@ json_blob_scalar!(
     "SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg;",
     "Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.",
     "scalar/security.rs",
+    crate::meta::CAT_SECURITY,
     snmp::snmp_decode
 );
 
@@ -49,6 +50,7 @@ json_blob_scalar!(
     "SELECT asn1.main.krb_decode(from_hex('61073005a003020105')) AS msg;",
     "Decode an [APPLICATION 1] Kerberos Ticket (tkt-vno 5) into JSON (msg_type 'Ticket').",
     "scalar/security.rs",
+    crate::meta::CAT_SECURITY,
     kerberos::krb_decode
 );
 
@@ -65,6 +67,7 @@ json_blob_scalar!(
     "SELECT asn1.main.ldap_decode(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')) AS msg;",
     "Decode a real LDAP searchRequest into JSON (RFC 4515 filter '(uid=jdoe)').",
     "scalar/security.rs",
+    crate::meta::CAT_SECURITY,
     ldap::ldap_decode
 );
 
@@ -81,6 +84,7 @@ json_blob_scalar!(
     "SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info;",
     "Decode a minimal CMS ContentInfo (content_type 'id-data') into JSON.",
     "scalar/security.rs",
+    crate::meta::CAT_SECURITY,
     cms::cms_decode
 );
 
@@ -98,6 +102,7 @@ json_blob_scalar!(
     "SELECT asn1.main.ocsp_decode(from_hex('30030a0100')) AS msg;",
     "Decode a minimal OCSPResponse into JSON (response_status 'successful').",
     "scalar/security.rs",
+    crate::meta::CAT_SECURITY,
     ocsp::ocsp_decode
 );
 
@@ -146,6 +151,7 @@ impl ScalarFunction for KrbTicket {
                 "Project the outer Kerberos Ticket into a STRUCT, e.g. `krb_ticket(blob)`.",
                 "kerberos, ticket, krb_ticket, sname, etype, enc-part, rfc 4120",
                 "scalar/security.rs",
+                crate::meta::CAT_SECURITY,
             ),
             ..Default::default()
         }
@@ -270,6 +276,7 @@ impl ScalarFunction for Pkcs8Info {
                 "Inspect PKCS#8 key structure (no key material), e.g. `pkcs8_info(blob)`.",
                 "pkcs8, private key, pkcs8_info, encrypted key, pbes2, pbkdf2, rfc 5208, key info",
                 "scalar/security.rs",
+                crate::meta::CAT_SECURITY,
             ),
             ..Default::default()
         }
@@ -386,6 +393,7 @@ impl ScalarFunction for CmsCerts {
                 "Get the embedded CMS certificates as a LIST(BLOB), e.g. `cms_certs(data)`.",
                 "cms, pkcs7, cms_certs, embedded certificates, x509, signedData, rfc 5652, chain",
                 "scalar/security.rs",
+                crate::meta::CAT_SECURITY,
             ),
             ..Default::default()
         }
@@ -457,6 +465,7 @@ impl ScalarFunction for CmsContent {
                 "Get the CMS signed payload bytes, e.g. `cms_content(data)`.",
                 "cms, pkcs7, cms_content, eContent, signed payload, detached, rfc 5652",
                 "scalar/security.rs",
+                crate::meta::CAT_SECURITY,
             ),
             ..Default::default()
         }

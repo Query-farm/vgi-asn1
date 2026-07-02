@@ -64,6 +64,7 @@ impl TableFunction for Pkcs12Bags {
              `friendly_name`, `local_key_id`, `alg`, `cert_sha256`, `encrypted`.",
             "pkcs12, p12, pfx, pkcs12_bags, keystore, safebag, certbag, friendlyname, x509",
             "table/pkcs12_bags.rs",
+            crate::meta::CAT_SECURITY,
         );
         tags.push((
             "vgi.result_columns_md".into(),
@@ -88,7 +89,7 @@ impl TableFunction for Pkcs12Bags {
             "blob",
             0,
             "any",
-            "A PKCS#12 (PFX) blob (literal BLOB/VARCHAR or scalar subquery). Fans into one row per \
+            "A PKCS#12 (PFX) payload (a literal value or scalar subquery). Fans into one row per \
              SafeBag.",
         )]
     }

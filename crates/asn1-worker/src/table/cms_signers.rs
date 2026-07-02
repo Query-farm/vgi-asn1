@@ -96,6 +96,7 @@ impl TableFunction for CmsSigners {
             "cms, pkcs7, cms_signers, signer, signed attributes, signing time, x509, sha256, \
              rfc 5652, code signing, s/mime",
             "table/cms_signers.rs",
+            crate::meta::CAT_SECURITY,
         );
         tags.push((
             "vgi.result_columns_md".into(),
@@ -117,7 +118,7 @@ impl TableFunction for CmsSigners {
             "blob",
             0,
             "any",
-            "A CMS / PKCS#7 SignedData blob (literal BLOB/VARCHAR or scalar subquery). Fans into \
+            "A CMS / PKCS#7 SignedData payload (a literal value or scalar subquery). Fans into \
              one row per SignerInfo.",
         )]
     }
