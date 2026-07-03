@@ -173,10 +173,24 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ),
                 (
                     "vgi.doc_md".to_string(),
-                    "The single schema for the `asn1` worker: the generic BER/DER codec scalars \
-                     plus the SNMP/Kerberos/LDAP/CMS/PKCS/OCSP structural decoders and the \
-                     `pem_decode` / `snmp_varbinds` / `ldap_messages` / `cms_signers` / \
-                     `pkcs12_bags` table functions."
+                    "## The `main` schema\n\n\
+                     Everything the `asn1` worker exposes lives here — one place to decode raw \
+                     BER/CER/DER bytes and the security and telecom protocols layered on top of \
+                     ASN.1.\n\n\
+                     **Key concepts**\n\n\
+                     - *Generic decode* — walk any DER/BER blob into a typed JSON tree, render it \
+                     `openssl asn1parse`-style, flatten it to TLV nodes, or inventory every \
+                     OBJECT IDENTIFIER.\n\
+                     - *Structural decoders* — shred the named modules (SNMP, Kerberos, LDAP, \
+                     CMS/PKCS#7, PKCS#8/#12, OCSP) into joinable rows and JSON projections.\n\
+                     - *Validation & canonicalization* — classify malformed input and re-encode \
+                     to minimal-length DER, all robust per row: a hostile blob yields an error \
+                     value, never a crash.\n\n\
+                     **When to use it**\n\n\
+                     Reach for this schema to triage, inventory, and join PKI and security binary \
+                     payloads at scale — for example lifting embedded certificate hashes so signed \
+                     CMS or PKCS#12 material joins straight to [vgi-x509](https://query.farm). No \
+                     cryptography is verified or decrypted; this is structural decode only."
                         .to_string(),
                 ),
                 (
