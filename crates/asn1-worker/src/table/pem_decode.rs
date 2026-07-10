@@ -7,7 +7,7 @@ use arrow_array::builder::{BinaryBuilder, Int32Builder, StringBuilder};
 use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::{DataType, Field, Schema, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
 use vgi_rpc::{OutputCollector, Result, RpcError};
 
 fn commented(name: &str, ty: DataType, comment: &str) -> Field {
@@ -56,16 +56,38 @@ impl TableFunction for PemDecode {
             crate::meta::CAT_GENERIC,
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `idx` | INTEGER | Block index within the bundle. |\n\
-             | `label` | VARCHAR | The `-----BEGIN <label>-----` label. |\n\
-             | `der` | BLOB | The base64-decoded DER bytes. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&[
+                (
+                    "idx",
+                    "INTEGER",
+                    "Zero-based index of the PEM block within the bundle.",
+                ),
+                (
+                    "label",
+                    "VARCHAR",
+                    "The block label, e.g. 'CERTIFICATE' or 'PRIVATE KEY'.",
+                ),
+                (
+                    "der",
+                    "BLOB",
+                    "The base64-decoded DER bytes of the block (feed to asn1.decode).",
+                ),
+            ]),
         ));
         FunctionMetadata {
             description: "Split a PEM bundle into its DER blocks (idx, label, der)".into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT idx, label, octet_length(der) AS der_bytes \
+                      FROM asn1.main.pem_decode('-----BEGIN CERTIFICATE-----' || chr(10) || \
+                      'AQID' || chr(10) || '-----END CERTIFICATE-----') \
+                      ORDER BY idx;"
+                    .into(),
+                description: "Split a one-block PEM bundle and list each block's index, label, \
+                              and decoded DER length."
+                    .into(),
+                expected_output: None,
+            }],
             tags,
             ..Default::default()
         }

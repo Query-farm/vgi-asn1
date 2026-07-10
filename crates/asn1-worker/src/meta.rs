@@ -8,37 +8,65 @@
 /// Encode comma-separated keywords as the JSON array of strings `vgi.keywords`
 /// requires (VGI138).
 pub fn keywords_json(keywords: &str) -> String {
-    let items: Vec<String> = keywords
+    let items: Vec<serde_json::Value> = keywords
         .split(',')
         .map(str::trim)
         .filter(|k| !k.is_empty())
-        .map(|k| {
-            let escaped = k.replace('\\', "\\\\").replace('"', "\\\"");
-            format!("\"{escaped}\"")
-        })
+        .map(|k| serde_json::Value::String(k.to_string()))
         .collect();
-    format!("[{}]", items.join(","))
+    serde_json::Value::Array(items).to_string()
 }
 
-/// Build the `vgi.agent_test_tasks` JSON value run by `vgi-lint simulate`.
-pub fn agent_test_tasks_json(tasks: &[(&str, &str, &str)]) -> String {
-    fn esc(s: &str) -> String {
-        s.replace('\\', "\\\\")
-            .replace('"', "\\\"")
-            .replace('\n', "\\n")
-    }
-    let items: Vec<String> = tasks
+/// One catalog-level `vgi.agent_test_tasks` task run by `vgi-lint simulate`.
+///
+/// Only `prompt` is shown to the analyst; `reference_sql` and `success_criteria`
+/// are **grader-only** (never surfaced) — one exercises the object for coverage
+/// and grades the analyst's answer, the other is an LLM-judge fallback rubric.
+pub struct AgentTask {
+    pub name: &'static str,
+    pub prompt: &'static str,
+    /// Canonical deterministic solution (grader-only). Verified against the live
+    /// worker so exact-compare grading is sound.
+    pub reference_sql: &'static str,
+    /// Optional LLM-judge rubric (grader-only) — a tier-3 fallback so a correct
+    /// answer shaped differently from `reference_sql` still passes.
+    pub success_criteria: Option<&'static str>,
+    /// Relax strict row-order comparison for multi-row references.
+    pub unordered: bool,
+}
+
+/// Build the `vgi.agent_test_tasks` JSON array (VGI407) from [`AgentTask`]s.
+pub fn agent_test_tasks_json(tasks: &[AgentTask]) -> String {
+    let items: Vec<serde_json::Value> = tasks
         .iter()
-        .map(|(name, prompt, reference_sql)| {
-            format!(
-                "{{\"name\":\"{}\",\"prompt\":\"{}\",\"reference_sql\":\"{}\"}}",
-                esc(name),
-                esc(prompt),
-                esc(reference_sql)
-            )
+        .map(|t| {
+            let mut obj = serde_json::Map::new();
+            obj.insert("name".into(), t.name.into());
+            obj.insert("prompt".into(), t.prompt.into());
+            obj.insert("reference_sql".into(), t.reference_sql.into());
+            if let Some(sc) = t.success_criteria {
+                obj.insert("success_criteria".into(), sc.into());
+            }
+            if t.unordered {
+                obj.insert("unordered".into(), true.into());
+            }
+            serde_json::Value::Object(obj)
         })
         .collect();
-    format!("[{}]", items.join(","))
+    serde_json::Value::Array(items).to_string()
+}
+
+/// Build a `vgi.result_columns_schema` JSON array (VGI307/321-323) for a table
+/// function with a static result schema: one `{name,type,description}` object per
+/// returned column. `type` must be a real DuckDB type and `description` non-blank.
+pub fn result_columns_schema_json(columns: &[(&str, &str, &str)]) -> String {
+    let items: Vec<serde_json::Value> = columns
+        .iter()
+        .map(
+            |(name, ty, desc)| serde_json::json!({ "name": name, "type": ty, "description": desc }),
+        )
+        .collect();
+    serde_json::Value::Array(items).to_string()
 }
 
 /// Category names for the schema's `vgi.categories` registry (VGI413). Each

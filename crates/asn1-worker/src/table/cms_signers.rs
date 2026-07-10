@@ -11,7 +11,7 @@ use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::{DataType, Schema, SchemaRef, TimeUnit};
 use asn1_core::security::cms;
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use super::{commented, const_blob, one};
@@ -99,15 +99,65 @@ impl TableFunction for CmsSigners {
             crate::meta::CAT_SECURITY,
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "One row per SignerInfo. Notable columns: `digest_alg` / `sig_alg` (named OIDs), \
-             `signing_time` (TIMESTAMP), `message_digest` / `signature` (BLOB), \
-             `signer_cert_sha256` (hex SHA-256 of the matching embedded cert — join to \
-             vgi-x509), and `signed_attrs` (remaining attributes as JSON)."
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&[
+                ("version", "INTEGER", "SignerInfo version (CMSVersion)."),
+                ("signer_sid", "VARCHAR", "Signer identifier kind."),
+                ("signer_issuer", "VARCHAR", "Signer cert issuer (CN=…,O=…)."),
+                ("signer_serial", "VARCHAR", "Signer cert serial (decimal)."),
+                (
+                    "signer_skid",
+                    "VARCHAR",
+                    "Subject key identifier (hex), if SKID-based.",
+                ),
+                ("digest_alg", "VARCHAR", "Named digest algorithm OID."),
+                ("sig_alg", "VARCHAR", "Named signature algorithm OID."),
+                (
+                    "signing_time",
+                    "TIMESTAMP",
+                    "signingTime signed attribute (UTC).",
+                ),
+                (
+                    "content_type",
+                    "VARCHAR",
+                    "contentType (eContentType / signed attr).",
+                ),
+                (
+                    "message_digest",
+                    "BLOB",
+                    "messageDigest signed attribute bytes.",
+                ),
+                (
+                    "signature",
+                    "BLOB",
+                    "The signature bytes (surfaced, not verified).",
+                ),
+                (
+                    "signer_cert_sha256",
+                    "VARCHAR",
+                    "SHA-256 (hex) of the matching embedded cert — join to vgi-x509.",
+                ),
+                (
+                    "signed_attrs",
+                    "VARCHAR",
+                    "Remaining signed attributes as JSON.",
+                ),
+            ]),
         ));
         FunctionMetadata {
             description: "Shred a CMS SignedData into one row per SignerInfo".into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT signer_sid, digest_alg, sig_alg \
+                      FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d0107\
+                      01a00404026869a0053003020105312c302a020101800401020304300b06096086480165030\
+                      40201300d06092a864886f70d01010105000403aabbcc')) \
+                      ORDER BY signer_sid;"
+                    .into(),
+                description: "Shred a CMS SignedData into one row per SignerInfo and project the \
+                              signer identity kind and the named digest/signature algorithms."
+                    .into(),
+                expected_output: None,
+            }],
             tags,
             ..Default::default()
         }

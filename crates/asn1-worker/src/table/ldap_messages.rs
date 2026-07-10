@@ -9,7 +9,7 @@ use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::{DataType, Field, Schema, SchemaRef};
 use asn1_core::security::ldap;
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use super::{commented, const_blob, one};
@@ -69,21 +69,49 @@ impl TableFunction for LdapMessages {
             crate::meta::CAT_SECURITY,
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n|---|---|---|\n\
-             | `message_id` | INTEGER | LDAP messageID. |\n\
-             | `op` | VARCHAR | protocolOp name. |\n\
-             | `dn` | VARCHAR | base/object DN. |\n\
-             | `scope` | VARCHAR | search scope. |\n\
-             | `filter` | VARCHAR | RFC 4515 filter. |\n\
-             | `attributes` | VARCHAR[] | requested/returned attributes. |\n\
-             | `result_code` | VARCHAR | named result code. |\n\
-             | `matched_dn` | VARCHAR | matchedDN. |\n\
-             | `diagnostic` | VARCHAR | diagnosticMessage. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&[
+                ("message_id", "INTEGER", "The LDAP messageID."),
+                ("op", "VARCHAR", "The protocolOp name, e.g. SearchRequest."),
+                ("dn", "VARCHAR", "The base/object DN (op-dependent)."),
+                ("scope", "VARCHAR", "Search scope (SearchRequest)."),
+                (
+                    "filter",
+                    "VARCHAR",
+                    "RFC 4515 filter string (SearchRequest).",
+                ),
+                (
+                    "attributes",
+                    "VARCHAR[]",
+                    "Requested/returned attribute names.",
+                ),
+                (
+                    "result_code",
+                    "VARCHAR",
+                    "Named LDAPResult code (result ops).",
+                ),
+                ("matched_dn", "VARCHAR", "The matchedDN (result ops)."),
+                (
+                    "diagnostic",
+                    "VARCHAR",
+                    "The diagnosticMessage (result ops).",
+                ),
+            ]),
         ));
         FunctionMetadata {
             description: "Fan a blob's LDAP messages into one row each".into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT op, dn, filter \
+                      FROM asn1.main.ldap_messages(from_hex('3033020102632e040a64633d6578616d70\
+                      6c650a01020a0100020100020100010100a30b040375696404046a646f653004040263\
+                      6e')) \
+                      ORDER BY message_id;"
+                    .into(),
+                description: "Shred an LDAP SearchRequest into rows and project the operation, \
+                              base DN, and RFC 4515 filter."
+                    .into(),
+                expected_output: None,
+            }],
             tags,
             ..Default::default()
         }

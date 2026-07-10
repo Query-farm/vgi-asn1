@@ -9,7 +9,7 @@ use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::{DataType, Schema, SchemaRef};
 use asn1_core::security::pkcs;
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use super::{commented, const_blob, one};
@@ -67,18 +67,50 @@ impl TableFunction for Pkcs12Bags {
             crate::meta::CAT_SECURITY,
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n|---|---|---|\n\
-             | `bag_type` | VARCHAR | SafeBag type. |\n\
-             | `friendly_name` | VARCHAR | friendlyName attribute. |\n\
-             | `local_key_id` | VARCHAR | localKeyID (hex). |\n\
-             | `alg` | VARCHAR | named key algorithm. |\n\
-             | `cert_sha256` | VARCHAR | SHA-256 of the cert (cert bags). |\n\
-             | `encrypted` | BOOLEAN | key material encrypted? |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&[
+                (
+                    "bag_type",
+                    "VARCHAR",
+                    "SafeBag type, e.g. certBag, pkcs8ShroudedKeyBag.",
+                ),
+                (
+                    "friendly_name",
+                    "VARCHAR",
+                    "friendlyName attribute, if present.",
+                ),
+                (
+                    "local_key_id",
+                    "VARCHAR",
+                    "localKeyID attribute (hex), if present.",
+                ),
+                ("alg", "VARCHAR", "Named key algorithm (key bags)."),
+                (
+                    "cert_sha256",
+                    "VARCHAR",
+                    "SHA-256 (hex) of the cert (cert bags) — join to vgi-x509.",
+                ),
+                (
+                    "encrypted",
+                    "BOOLEAN",
+                    "Whether the bag's key material is encrypted.",
+                ),
+            ]),
         ));
         FunctionMetadata {
             description: "Walk a PKCS#12 keystore into one row per SafeBag".into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT bag_type, encrypted, cert_sha256 \
+                      FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a0\
+                      3f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a01\
+                      03a0173015060a2a864886f70d01091601a00704053003020105')) \
+                      ORDER BY bag_type;"
+                    .into(),
+                description: "Walk a minimal PKCS#12 PFX and list each SafeBag's type, encryption \
+                              flag, and (for cert bags) the vgi-x509 join hash."
+                    .into(),
+                expected_output: None,
+            }],
             tags,
             ..Default::default()
         }

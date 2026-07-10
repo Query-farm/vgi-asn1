@@ -129,7 +129,7 @@ jobs:
     name: metadata quality (vgi-lint)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -142,6 +142,5 @@ jobs:
       - name: vgi-lint
         uses: Query-farm/vgi-lint-check@v1
         with:
-          version: "0.37.0"
           location: "${{ github.workspace }}/target/release/asn1-worker"
           fail-on: info

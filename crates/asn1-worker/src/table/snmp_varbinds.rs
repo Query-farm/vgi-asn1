@@ -8,7 +8,7 @@ use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::{DataType, Schema, SchemaRef};
 use asn1_core::security::snmp;
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use super::{commented, const_blob, one};
@@ -61,18 +61,45 @@ impl TableFunction for SnmpVarbinds {
             crate::meta::CAT_SECURITY,
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n|---|---|---|\n\
-             | `request_id` | INTEGER | PDU request-id. |\n\
-             | `pdu_type` | VARCHAR | PDU type. |\n\
-             | `oid` | VARCHAR | Varbind OID. |\n\
-             | `oid_name` | VARCHAR | Resolved OID name. |\n\
-             | `type` | VARCHAR | SMI value type. |\n\
-             | `value` | VARCHAR | Value as JSON. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&[
+                (
+                    "request_id",
+                    "INTEGER",
+                    "The PDU request-id (NULL for v1 traps).",
+                ),
+                (
+                    "pdu_type",
+                    "VARCHAR",
+                    "The PDU type, e.g. GetResponse, SNMPv2-Trap.",
+                ),
+                ("oid", "VARCHAR", "The varbind OID, dotted-decimal."),
+                (
+                    "oid_name",
+                    "VARCHAR",
+                    "The resolved OID name (NULL if unknown).",
+                ),
+                (
+                    "type",
+                    "VARCHAR",
+                    "The SMI value type, e.g. Counter32, TimeTicks.",
+                ),
+                ("value", "VARCHAR", "The varbind value as JSON."),
+            ]),
         ));
         FunctionMetadata {
             description: "Fan an SNMP PDU into one row per varbind".into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT oid, oid_name, type \
+                      FROM asn1.main.snmp_varbinds(from_hex('302e02010104067075626c6963a2210201\
+                      010201000201003016301406082b060102010101000408526f757465724f53')) \
+                      ORDER BY oid;"
+                    .into(),
+                description: "Shred an SNMP v2c GetResponse into its varbinds and project each \
+                              OID, resolved name, and SMI type."
+                    .into(),
+                expected_output: None,
+            }],
             tags,
             ..Default::default()
         }

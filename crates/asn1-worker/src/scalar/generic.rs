@@ -25,6 +25,17 @@ fn rt(e: impl std::fmt::Display) -> RpcError {
     RpcError::runtime_error(e.to_string())
 }
 
+// Closed-set choices for the optional const arguments, surfaced as machine-
+// readable `vgi_choices` (VGI317) so agents discover valid inputs instead of
+// guessing. Kept next to the behaviour they mirror:
+//   - `decode(blob, mode)` maps anything but 'tlv' to the nested projection.
+//   - `dump(blob, format)` selects the renderer in `asn1_core::dump::DumpFormat`.
+//   - `is_valid`/`reencode`'s `rules` is parsed by `asn1_core::tlv::Rules::parse`
+//     (der/cer/ber; the enforced set matches its accepted names).
+const DECODE_MODES: [&str; 4] = ["auto", "struct", "json", "tlv"];
+const DUMP_FORMATS: [&str; 2] = ["openssl", "dumpasn1"];
+const ENCODING_RULES: [&str; 3] = ["der", "cer", "ber"];
+
 // ---- version ----
 
 pub struct Asn1Version;
@@ -137,13 +148,16 @@ impl ScalarFunction for Decode {
             "The ASN.1 DER/BER/CER bytes to decode — raw binary, or text holding those bytes.",
         )];
         if self.two {
-            specs.push(ArgSpec::const_arg(
-                "mode",
-                1,
-                "varchar",
-                "Output shape: 'auto' (default), 'struct', 'json' (the nested typed JSON), or \
-                 'tlv' (the flat TLV-node list).",
-            ));
+            specs.push(
+                ArgSpec::const_arg(
+                    "mode",
+                    1,
+                    "varchar",
+                    "Output shape: 'auto' (default), 'struct', 'json' (the nested typed JSON), or \
+                     'tlv' (the flat TLV-node list).",
+                )
+                .with_choices(DECODE_MODES),
+            );
         }
         specs
     }
@@ -262,13 +276,16 @@ impl ScalarFunction for Dump {
             "The ASN.1 DER/BER/CER bytes to render — raw binary, or text holding those bytes.",
         )];
         if self.two {
-            specs.push(ArgSpec::const_arg(
-                "format",
-                1,
-                "varchar",
-                "Dump style: 'openssl' (default, like `openssl asn1parse`) or 'dumpasn1' \
-                 (Gutmann's annotated style with OID names).",
-            ));
+            specs.push(
+                ArgSpec::const_arg(
+                    "format",
+                    1,
+                    "varchar",
+                    "Dump style: 'openssl' (default, like `openssl asn1parse`) or 'dumpasn1' \
+                     (Gutmann's annotated style with OID names).",
+                )
+                .with_choices(DUMP_FORMATS),
+            );
         }
         specs
     }
@@ -427,7 +444,9 @@ impl ScalarFunction for AtPath {
                 "path",
                 1,
                 DataType::Utf8,
-                "A JSONPath-ish node locator, e.g. '$', '$.0', '$.0.2' (as produced by tlv()).",
+                "A JSONPath-ish node locator produced by tlv(): `$` selects the root and each \
+                 following `.N` descends into the N-th child (so `$.0.2` is the third child of \
+                 the first child). Any depth resolves; an unmatched path yields JSON null.",
             ),
         ]
     }
@@ -723,12 +742,15 @@ impl ScalarFunction for IsValid {
             "The ASN.1 bytes to validate — raw binary, or text holding those bytes.",
         )];
         if self.two {
-            specs.push(ArgSpec::const_arg(
-                "rules",
-                1,
-                "varchar",
-                "Encoding rules to validate against: 'der' (default), 'cer', or 'ber'.",
-            ));
+            specs.push(
+                ArgSpec::const_arg(
+                    "rules",
+                    1,
+                    "varchar",
+                    "Encoding rules to validate against: 'der' (default), 'cer', or 'ber'.",
+                )
+                .with_choices(ENCODING_RULES),
+            );
         }
         specs
     }
@@ -986,13 +1008,16 @@ impl ScalarFunction for Reencode {
              NULL/malformed → NULL.",
         )];
         if self.two {
-            specs.push(ArgSpec::const_arg(
-                "rules",
-                1,
-                "varchar",
-                "Target encoding rules: 'der' (default), 'cer', or 'ber'. The worker emits \
-                 canonical DER for any value.",
-            ));
+            specs.push(
+                ArgSpec::const_arg(
+                    "rules",
+                    1,
+                    "varchar",
+                    "Target encoding rules: 'der' (default), 'cer', or 'ber'. The worker emits \
+                     canonical DER for any value.",
+                )
+                .with_choices(ENCODING_RULES),
+            );
         }
         specs
     }

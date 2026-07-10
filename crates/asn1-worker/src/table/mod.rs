@@ -10,6 +10,7 @@
 
 mod cms_signers;
 mod ldap_messages;
+pub mod oid_registry;
 mod pem_decode;
 mod pkcs12_bags;
 mod snmp_varbinds;
