@@ -249,6 +249,9 @@ pub mod test_support {
 
     pub fn process_params(output_schema: SchemaRef, arguments: Arguments) -> ProcessParams {
         ProcessParams {
+            substream_id: None,
+            if_none_match: None,
+            if_modified_since: None,
             output_schema,
             input_schema: None,
             execution_id: Vec::new(),
