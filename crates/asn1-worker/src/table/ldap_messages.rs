@@ -56,6 +56,13 @@ impl TableFunction for LdapMessages {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql = "SELECT op, dn, filter \
+                      FROM asn1.main.ldap_messages(from_hex('3033020102632e040a64633d6578616d70\
+                      6c650a01020a0100020100020100010100a30b040375696404046a646f653004040263\
+                      6e')) \
+                      ORDER BY message_id;";
+        let ex_desc = "Shred an LDAP SearchRequest into rows and project the operation, base DN, \
+                       and RFC 4515 filter.";
         let mut tags = crate::meta::object_tags(
             "LDAP Messages",
             "Fan a blob (one segment may carry several LDAPMessages, RFC 4511) into one row per \
@@ -98,18 +105,15 @@ impl TableFunction for LdapMessages {
                 ),
             ]),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Fan a blob's LDAP messages into one row each".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT op, dn, filter \
-                      FROM asn1.main.ldap_messages(from_hex('3033020102632e040a64633d6578616d70\
-                      6c650a01020a0100020100020100010100a30b040375696404046a646f653004040263\
-                      6e')) \
-                      ORDER BY message_id;"
-                    .into(),
-                description: "Shred an LDAP SearchRequest into rows and project the operation, \
-                              base DN, and RFC 4515 filter."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,

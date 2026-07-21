@@ -56,6 +56,21 @@ pub fn agent_test_tasks_json(tasks: &[AgentTask]) -> String {
     serde_json::Value::Array(items).to_string()
 }
 
+/// Build a `vgi.example_queries` JSON array (VGI515): one `{description, sql}`
+/// object per example. This is the described-example carrier — unlike the native
+/// `duckdb_functions().examples` column (which the vgi extension populates from
+/// `Meta.examples` but drops the per-example description), it keeps a
+/// human-readable description on every example so `vgi-lint` can verify it.
+/// The SQL is byte-identical to the matching `Meta.examples` entry so the linter
+/// dedups the two carriers and the described one wins.
+pub fn example_queries_json(examples: &[(&str, &str)]) -> String {
+    let items: Vec<serde_json::Value> = examples
+        .iter()
+        .map(|(description, sql)| serde_json::json!({ "description": description, "sql": sql }))
+        .collect();
+    serde_json::Value::Array(items).to_string()
+}
+
 /// Build a `vgi.result_columns_schema` JSON array (VGI307/321-323) for a table
 /// function with a static result schema: one `{name,type,description}` object per
 /// returned column. `type` must be a real DuckDB type and `description` non-blank.
@@ -74,11 +89,10 @@ pub fn result_columns_schema_json(columns: &[(&str, &str, &str)]) -> String {
 /// declares the ordered registry via [`categories_json`].
 pub const CAT_GENERIC: &str = "Generic ASN.1";
 pub const CAT_SECURITY: &str = "Security Modules";
-pub const CAT_DIAGNOSTICS: &str = "Diagnostics";
 
 /// The ordered `vgi.categories` registry declared on schema `main` (VGI413): an
 /// array of `{"name","description"}` objects, one per [`CAT_GENERIC`] /
-/// [`CAT_SECURITY`] / [`CAT_DIAGNOSTICS`]. Order is the navigation/listing order.
+/// [`CAT_SECURITY`]. Order is the navigation/listing order.
 pub fn categories_json() -> String {
     fn esc(s: &str) -> String {
         s.replace('\\', "\\\\").replace('"', "\\\"")
@@ -93,10 +107,6 @@ pub fn categories_json() -> String {
             CAT_SECURITY,
             "Structural decoders for the named modules that ride on ASN.1 — SNMP, Kerberos, \
              LDAP, CMS/PKCS#7, PKCS#8/#12, OCSP — shredding them into JSON and joinable rows.",
-        ),
-        (
-            CAT_DIAGNOSTICS,
-            "Operational introspection of the running worker, such as its version string.",
         ),
     ];
     let items: Vec<String> = cats

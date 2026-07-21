@@ -45,6 +45,12 @@ impl TableFunction for PemDecode {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql = "SELECT idx, label, octet_length(der) AS der_bytes \
+                      FROM asn1.main.pem_decode('-----BEGIN CERTIFICATE-----' || chr(10) || \
+                      'AQID' || chr(10) || '-----END CERTIFICATE-----') \
+                      ORDER BY idx;";
+        let ex_desc = "Split a one-block PEM bundle and list each block's index, label, and \
+                       decoded DER length.";
         let mut tags = crate::meta::object_tags(
             "Decode PEM Bundle",
             "Split a PEM bundle (text) into its `-----BEGIN <label>-----` blocks, base64-decoding \
@@ -75,17 +81,15 @@ impl TableFunction for PemDecode {
                 ),
             ]),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Split a PEM bundle into its DER blocks (idx, label, der)".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT idx, label, octet_length(der) AS der_bytes \
-                      FROM asn1.main.pem_decode('-----BEGIN CERTIFICATE-----' || chr(10) || \
-                      'AQID' || chr(10) || '-----END CERTIFICATE-----') \
-                      ORDER BY idx;"
-                    .into(),
-                description: "Split a one-block PEM bundle and list each block's index, label, \
-                              and decoded DER length."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,

@@ -24,7 +24,7 @@ json_blob_scalar!(
     "snmp_decode",
     "Decode SNMP Message",
     "Decode an SNMP v1/v2c/v3 message to JSON (version, community, PDU, resolved varbinds).",
-    "Decode an SNMP v1/v2c/v3 message (RFC 1157/3416) into a JSON STRUCT: version, community, \
+    "Decode an SNMP v1/v2c/v3 message (RFC 1157/3416) into a JSON `STRUCT`: version, community, \
      pdu_type, request_id, error_status, error_index, trap fields, and a varbinds list (each \
      with oid, resolved oid_name, SMI type, and value). The signature/auth envelope is not \
      verified. Returns {error} on a non-SNMP blob.",
@@ -142,17 +142,28 @@ impl ScalarFunction for KrbTicket {
                     .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "Kerberos Ticket",
-                "Parse the outer Kerberos `Ticket` ([APPLICATION 1], RFC 4120) into a typed \
-                 STRUCT: ticket version, realm, service principal name + name-type, and the \
-                 EncryptedData envelope (named etype, kvno, and the still-encrypted cipher as a \
-                 BLOB — nothing is decrypted). NULL for a non-Ticket blob.",
-                "Project the outer Kerberos Ticket into a STRUCT, e.g. `krb_ticket(blob)`.",
-                "kerberos, ticket, krb_ticket, sname, etype, enc-part, rfc 4120",
-                "scalar/security.rs",
-                crate::meta::CAT_SECURITY,
-            ),
+            tags: {
+                let mut tags = crate::meta::object_tags(
+                    "Kerberos Ticket",
+                    "Parse the outer Kerberos `Ticket` ([APPLICATION 1], RFC 4120) into a typed \
+                     `STRUCT`: ticket version, realm, service principal name + name-type, and the \
+                     EncryptedData envelope (named etype, kvno, and the still-encrypted cipher as \
+                     a `BLOB` — nothing is decrypted). NULL for a non-Ticket blob.",
+                    "Project the outer Kerberos Ticket into a `STRUCT`, e.g. `krb_ticket(blob)`.",
+                    "kerberos, ticket, krb_ticket, sname, etype, enc-part, rfc 4120",
+                    "scalar/security.rs",
+                    crate::meta::CAT_SECURITY,
+                );
+                tags.push((
+                    "vgi.example_queries".to_string(),
+                    crate::meta::example_queries_json(&[(
+                        "Project the outer [APPLICATION 1] Ticket envelope to a STRUCT (here \
+                         tkt_vno = 5; realm/sname/enc-part NULL on this minimal ticket).",
+                        "SELECT asn1.main.krb_ticket(from_hex('61073005a003020105')) AS ticket;",
+                    )]),
+                ));
+                tags
+            },
             ..Default::default()
         }
     }
@@ -266,18 +277,32 @@ impl ScalarFunction for Pkcs8Info {
                     .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "PKCS#8 Key Info",
-                "Decode a PKCS#8 PrivateKeyInfo (RFC 5208) or EncryptedPrivateKeyInfo into a \
-                 typed STRUCT: version, the named key algorithm, its params as JSON, an optional \
-                 surfaced public key (never the private key), an `encrypted` flag, and — for \
-                 encrypted keys — the named PBES2 `kdf` and `enc_alg` OIDs. No decryption; \
-                 plaintext key material is never exposed.",
-                "Inspect PKCS#8 key structure (no key material), e.g. `pkcs8_info(blob)`.",
-                "pkcs8, private key, pkcs8_info, encrypted key, pbes2, pbkdf2, rfc 5208, key info",
-                "scalar/security.rs",
-                crate::meta::CAT_SECURITY,
-            ),
+            tags: {
+                let mut tags = crate::meta::object_tags(
+                    "PKCS#8 Key Info",
+                    "Decode a PKCS#8 PrivateKeyInfo (RFC 5208) or EncryptedPrivateKeyInfo into a \
+                     typed `STRUCT`: version, the named key algorithm, its params as JSON, an \
+                     optional surfaced public key (never the private key), an `encrypted` flag, \
+                     and — for encrypted keys — the named PBES2 `kdf` and `enc_alg` OIDs. No \
+                     decryption; plaintext key material is never exposed.",
+                    "Inspect PKCS#8 key structure (no key material), e.g. `pkcs8_info(blob)`.",
+                    "pkcs8, private key, pkcs8_info, encrypted key, pbes2, pbkdf2, rfc 5208, key \
+                     info",
+                    "scalar/security.rs",
+                    crate::meta::CAT_SECURITY,
+                );
+                tags.push((
+                    "vgi.example_queries".to_string(),
+                    crate::meta::example_queries_json(&[(
+                        "Inspect a minimal PKCS#8 PrivateKeyInfo's structure (version 0, \
+                         algorithm 'rsaEncryption') without exposing key material.",
+                        "SELECT asn1.main.pkcs8_info(from_hex('3016020100300d06092a864886f70d0101\
+                          010500\
+                          04026869')) AS info;",
+                    )]),
+                ));
+                tags
+            },
             ..Default::default()
         }
     }
@@ -364,6 +389,26 @@ impl ScalarFunction for CmsCerts {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql =
+            "SELECT asn1.main.cms_certs(from_hex('301106092a864886f70d010701a00404026869')) \
+             AS certs;";
+        let ex_desc = "Extract the embedded certificate LIST<BLOB> from a CMS blob (an empty list \
+                       for this minimal id-data ContentInfo, which carries no certs).";
+        let mut tags = crate::meta::object_tags(
+            "CMS Embedded Certificates",
+            "Return the list of embedded DER certificates carried in a CMS / PKCS#7 \
+             SignedData (RFC 5652) as a `LIST(BLOB)`. Each element is a complete X.509 \
+             certificate you can hash (sha256) and join to a vgi-x509 fingerprint, or re-feed \
+             to asn1.decode. Empty list for a non-SignedData blob.",
+            "Get the embedded CMS certificates as a `LIST(BLOB)`, e.g. `cms_certs(data)`.",
+            "cms, pkcs7, cms_certs, embedded certificates, x509, signedData, rfc 5652, chain",
+            "scalar/security.rs",
+            crate::meta::CAT_SECURITY,
+        );
+        tags.push((
+            "vgi.example_queries".to_string(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Return the embedded DER certificates of a CMS SignedData as a \
                           LIST(BLOB) — the join key to vgi-x509 (hash each with sha256)."
@@ -374,27 +419,11 @@ impl ScalarFunction for CmsCerts {
                 true,
             )))),
             examples: vec![FunctionExample {
-                sql:
-                    "SELECT asn1.main.cms_certs(from_hex('301106092a864886f70d010701a00404026869'))\
-                       AS certs;"
-                        .into(),
-                description:
-                    "Extract the embedded certificate LIST<BLOB> from a CMS blob (an empty \
-                              list for this minimal id-data ContentInfo, which carries no certs)."
-                        .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "CMS Embedded Certificates",
-                "Return the list of embedded DER certificates carried in a CMS / PKCS#7 \
-                 SignedData (RFC 5652) as a LIST(BLOB). Each element is a complete X.509 \
-                 certificate you can hash (sha256) and join to a vgi-x509 fingerprint, or re-feed \
-                 to asn1.decode. Empty list for a non-SignedData blob.",
-                "Get the embedded CMS certificates as a LIST(BLOB), e.g. `cms_certs(data)`.",
-                "cms, pkcs7, cms_certs, embedded certificates, x509, signedData, rfc 5652, chain",
-                "scalar/security.rs",
-                crate::meta::CAT_SECURITY,
-            ),
+            tags,
             ..Default::default()
         }
     }
@@ -442,31 +471,37 @@ impl ScalarFunction for CmsContent {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql =
+            "SELECT asn1.main.cms_content(from_hex('301106092a864886f70d010701a00404026869')) \
+             AS econtent;";
+        let ex_desc = "Extract the encapsulated eContent BLOB from a CMS SignedData (NULL for \
+                       this minimal id-data ContentInfo, which wraps no SignedData).";
+        let mut tags = crate::meta::object_tags(
+            "CMS Encapsulated Content",
+            "Return the encapsulated content (`eContent`) bytes of a CMS / PKCS#7 SignedData \
+             (RFC 5652) as a `BLOB`. This is the signed payload — often itself a nested CMS or \
+             DER structure you can re-feed to asn1.decode. NULL when no eContent is present \
+             (detached signature) or the blob is not a SignedData.",
+            "Get the CMS signed payload bytes, e.g. `cms_content(data)`.",
+            "cms, pkcs7, cms_content, eContent, signed payload, detached, rfc 5652",
+            "scalar/security.rs",
+            crate::meta::CAT_SECURITY,
+        );
+        tags.push((
+            "vgi.example_queries".to_string(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Return the encapsulated eContent (BLOB) of a CMS SignedData — often a \
                           nested CMS/DER, re-feed to decode(). NULL when absent."
                 .into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.cms_content(from_hex('301106092a864886f70d010701a004040268\
-                      69')) AS econtent;"
-                    .into(),
-                description: "Extract the encapsulated eContent BLOB from a CMS SignedData (NULL \
-                              for this minimal id-data ContentInfo, which wraps no SignedData)."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "CMS Encapsulated Content",
-                "Return the encapsulated content (`eContent`) bytes of a CMS / PKCS#7 SignedData \
-                 (RFC 5652) as a BLOB. This is the signed payload — often itself a nested CMS or \
-                 DER structure you can re-feed to asn1.decode. NULL when no eContent is present \
-                 (detached signature) or the blob is not a SignedData.",
-                "Get the CMS signed payload bytes, e.g. `cms_content(data)`.",
-                "cms, pkcs7, cms_content, eContent, signed payload, detached, rfc 5652",
-                "scalar/security.rs",
-                crate::meta::CAT_SECURITY,
-            ),
+            tags,
             ..Default::default()
         }
     }

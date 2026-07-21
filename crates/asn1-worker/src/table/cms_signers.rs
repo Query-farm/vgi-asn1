@@ -82,6 +82,13 @@ impl TableFunction for CmsSigners {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql = "SELECT signer_sid, digest_alg, sig_alg \
+                      FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d0107\
+                      01a00404026869a0053003020105312c302a020101800401020304300b06096086480165030\
+                      40201300d06092a864886f70d01010105000403aabbcc')) \
+                      ORDER BY signer_sid;";
+        let ex_desc = "Shred a CMS SignedData into one row per SignerInfo and project the signer \
+                       identity kind and the named digest/signature algorithms.";
         let mut tags = crate::meta::object_tags(
             "CMS Signers",
             "Shred a CMS / PKCS#7 SignedData (RFC 5652) into one row per SignerInfo: the signer's \
@@ -144,18 +151,15 @@ impl TableFunction for CmsSigners {
                 ),
             ]),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Shred a CMS SignedData into one row per SignerInfo".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT signer_sid, digest_alg, sig_alg \
-                      FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d0107\
-                      01a00404026869a0053003020105312c302a020101800401020304300b06096086480165030\
-                      40201300d06092a864886f70d01010105000403aabbcc')) \
-                      ORDER BY signer_sid;"
-                    .into(),
-                description: "Shred a CMS SignedData into one row per SignerInfo and project the \
-                              signer identity kind and the named digest/signature algorithms."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,

@@ -54,7 +54,10 @@ FROM asn1.main.cms_signers(read_blob('codesign.p7s')) s;
 | CMS / PKCS#7 | `cms_decode(blob)`, `cms_signers(blob)` → `TABLE`, `cms_certs(blob)` → `LIST<BLOB>`, `cms_content(blob)` → `BLOB` | scalar / table |
 | PKCS#8/#12 | `pkcs8_info(blob)` → `STRUCT`, `pkcs12_bags(blob)` → `TABLE` | scalar / table |
 | OCSP | `ocsp_decode(blob)` | scalar |
-| Meta | `asn1_version()` | scalar |
+
+The worker build version is published as catalog metadata —
+`SELECT implementation_version FROM vgi_catalogs('<location>')` — rather than as a
+scalar function.
 
 `decode` returns a stable **JSON** column (the spec's stable-column choice): mode
 `auto`/`struct`/`json` give the clean nested typed projection (SEQUENCE→array,

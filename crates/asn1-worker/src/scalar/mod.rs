@@ -36,7 +36,6 @@ pub(crate) fn json_output(
 
 /// Register every scalar function on the worker.
 pub fn register(worker: &mut Worker) {
-    worker.register_scalar(generic::Asn1Version);
     // Each optional-2nd-arg scalar registers a 1-arg and a 2-arg arity overload
     // (DuckDB scalars take only positional args).
     worker.register_scalar(generic::Decode { two: false });

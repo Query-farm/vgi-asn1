@@ -36,49 +36,91 @@ const DECODE_MODES: [&str; 4] = ["auto", "struct", "json", "tlv"];
 const DUMP_FORMATS: [&str; 2] = ["openssl", "dumpasn1"];
 const ENCODING_RULES: [&str; 3] = ["der", "cer", "ber"];
 
-// ---- version ----
+// ---- described-example carriers (VGI515) ----
+//
+// Each optional-2nd-arg scalar registers a 1-arg and a 2-arg overload (DuckDB
+// scalars are positional-only). `vgi-lint` reports one row per overload but
+// merges the tag-carried and native `Meta.examples` by SQL, so we give BOTH
+// overloads the SAME aggregated `vgi.example_queries` list (both arities'
+// examples) — whichever overload row the linter reads, both native example
+// SQLs then dedup against a described entry. The `*_SQL` strings are
+// byte-identical to the corresponding `Meta.examples` entry.
 
-pub struct Asn1Version;
+const DECODE_EX1_SQL: &str = "SELECT asn1.main.decode(from_hex('3003020105')) AS decoded;";
+const DECODE_EX1_DESC: &str =
+    "Decode a DER `SEQUENCE { INTEGER 5 }` to a nested JSON tree (yields the JSON array `[5]`).";
+const DECODE_EX2_SQL: &str = "SELECT asn1.main.decode(from_hex('3003020105'), 'tlv') AS nodes;";
+const DECODE_EX2_DESC: &str = "Decode a DER `SEQUENCE { INTEGER 5 }` with mode 'tlv' to its flat \
+                              list of TLV nodes (path, class, tag, length, value).";
 
-impl ScalarFunction for Asn1Version {
-    fn name(&self) -> &str {
-        "asn1_version"
-    }
+const DUMP_EX1_SQL: &str = "SELECT asn1.main.dump(from_hex('3003020105')) AS text;";
+const DUMP_EX1_DESC: &str =
+    "Produce an openssl-asn1parse-style dump of a DER `SEQUENCE { INTEGER 5 }`.";
+const DUMP_EX2_SQL: &str = "SELECT asn1.main.dump(from_hex('3003020105'), 'dumpasn1') AS text;";
+const DUMP_EX2_DESC: &str = "Dump a DER `SEQUENCE { INTEGER 5 }` in dumpasn1 (Gutmann annotated) \
+                            style.";
 
-    fn metadata(&self) -> FunctionMetadata {
-        FunctionMetadata {
-            description: "Returns the asn1 worker version string".into(),
-            return_type: Some(DataType::Utf8),
-            examples: vec![FunctionExample {
-                sql: "SELECT asn1.main.asn1_version();".into(),
-                description: "Return the asn1 worker version string.".into(),
-                expected_output: None,
-            }],
-            tags: crate::meta::object_tags(
-                "ASN.1 Worker Version",
-                "Return the semantic version string of the running asn1 worker binary. Useful for \
-                 diagnostics and confirming which build is attached.",
-                "Return the asn1 worker version, e.g. `asn1_version()` → '0.1.0'.",
-                "version, build version, asn1_version, diagnostics, worker version, semver",
-                "scalar/generic.rs",
-                crate::meta::CAT_DIAGNOSTICS,
-            ),
-            ..Default::default()
-        }
-    }
+const ISVALID_EX1_SQL: &str = "SELECT asn1.main.is_valid(from_hex('3003020105')) AS valid;";
+const ISVALID_EX1_DESC: &str =
+    "Check that a DER `SEQUENCE { INTEGER 5 }` is well-formed (returns true).";
+const ISVALID_EX2_SQL: &str = "SELECT asn1.main.is_valid(from_hex('3003020105'), 'der') AS valid;";
+const ISVALID_EX2_DESC: &str = "Check that a DER `SEQUENCE { INTEGER 5 }` is valid under the \
+                               strict DER rules (returns true).";
 
-    fn argument_specs(&self) -> Vec<ArgSpec> {
-        Vec::new()
-    }
+const REENCODE_EX1_SQL: &str = "SELECT asn1.main.reencode(from_hex('3003020105')) AS der;";
+const REENCODE_EX1_DESC: &str = "Re-encode a blob to canonical DER (an already-canonical SEQUENCE \
+                                round-trips unchanged).";
+const REENCODE_EX2_SQL: &str = "SELECT asn1.main.reencode(from_hex('3003020105'), 'der') AS der;";
+const REENCODE_EX2_DESC: &str = "Re-encode a blob to canonical DER under an explicit 'der' rules \
+                                set.";
 
-    fn on_bind(&self, _params: &BindParams) -> Result<BindResponse> {
-        Ok(BindResponse::result(DataType::Utf8))
-    }
+/// Append a `vgi.example_queries` described-example tag (VGI515) to a tag list.
+fn with_examples(
+    mut tags: Vec<(String, String)>,
+    examples: &[(&str, &str)],
+) -> Vec<(String, String)> {
+    tags.push((
+        "vgi.example_queries".to_string(),
+        crate::meta::example_queries_json(examples),
+    ));
+    tags
+}
 
-    fn process(&self, params: &ProcessParams, batch: &RecordBatch) -> Result<RecordBatch> {
-        let out: ArrayRef = Arc::new(StringArray::from(vec![crate::version(); batch.num_rows()]));
-        RecordBatch::try_new(params.output_schema.clone(), vec![out]).map_err(rt)
-    }
+fn decode_tags(tags: Vec<(String, String)>) -> Vec<(String, String)> {
+    with_examples(
+        tags,
+        &[
+            (DECODE_EX1_DESC, DECODE_EX1_SQL),
+            (DECODE_EX2_DESC, DECODE_EX2_SQL),
+        ],
+    )
+}
+
+fn dump_tags(tags: Vec<(String, String)>) -> Vec<(String, String)> {
+    with_examples(
+        tags,
+        &[(DUMP_EX1_DESC, DUMP_EX1_SQL), (DUMP_EX2_DESC, DUMP_EX2_SQL)],
+    )
+}
+
+fn is_valid_tags(tags: Vec<(String, String)>) -> Vec<(String, String)> {
+    with_examples(
+        tags,
+        &[
+            (ISVALID_EX1_DESC, ISVALID_EX1_SQL),
+            (ISVALID_EX2_DESC, ISVALID_EX2_SQL),
+        ],
+    )
+}
+
+fn reencode_tags(tags: Vec<(String, String)>) -> Vec<(String, String)> {
+    with_examples(
+        tags,
+        &[
+            (REENCODE_EX1_DESC, REENCODE_EX1_SQL),
+            (REENCODE_EX2_DESC, REENCODE_EX2_SQL),
+        ],
+    )
 }
 
 // ---- decode (mode-aware JSON) ----
@@ -101,18 +143,16 @@ impl ScalarFunction for Decode {
                 "Decode a BER/CER/DER blob to JSON with an explicit output `mode` ∈ {auto, struct, \
                  json, tlv}: auto/struct/json return the nested typed JSON projection; tlv returns \
                  the flat TLV-node list. NULL → NULL; a malformed blob yields {error,kind}.",
-                "SELECT asn1.main.decode(from_hex('3003020105'), 'tlv') AS nodes;",
-                "Decode a DER `SEQUENCE { INTEGER 5 }` with mode 'tlv' to its flat list of TLV \
-                 nodes (path, class, tag, length, value).",
+                DECODE_EX2_SQL,
+                DECODE_EX2_DESC,
             )
         } else {
             (
                 "Decode a BER/CER/DER blob to its nested typed JSON projection (the 'auto' mode). \
                  NULL → NULL; a malformed blob yields {error,kind}. Call the two-argument overload \
                  to choose a different mode.",
-                "SELECT asn1.main.decode(from_hex('3003020105')) AS decoded;",
-                "Decode a DER `SEQUENCE { INTEGER 5 }` to a nested JSON tree (yields the JSON array \
-                 `[5]`).",
+                DECODE_EX1_SQL,
+                DECODE_EX1_DESC,
             )
         };
         FunctionMetadata {
@@ -123,7 +163,7 @@ impl ScalarFunction for Decode {
                 description: example_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
+            tags: decode_tags(crate::meta::object_tags(
                 "Decode ASN.1",
                 "Decode any BER / CER / DER blob into JSON. The optional second argument `mode` is \
                  one of 'auto' (default), 'struct', 'json' — all returning the clean nested typed \
@@ -136,7 +176,7 @@ impl ScalarFunction for Decode {
                 "asn1, decode, ber, der, cer, tlv, parse, to json, struct, blob, binary",
                 "scalar/generic.rs",
                 crate::meta::CAT_GENERIC,
-            ),
+            )),
             ..Default::default()
         }
     }
@@ -230,8 +270,8 @@ impl ScalarFunction for Dump {
                  {openssl, dumpasn1}: openssl mirrors `openssl asn1parse`; dumpasn1 mirrors \
                  Gutmann's annotated style with OID names. A malformed blob renders a parse-error \
                  line, never an error.",
-                "SELECT asn1.main.dump(from_hex('3003020105'), 'dumpasn1') AS text;",
-                "Dump a DER `SEQUENCE { INTEGER 5 }` in dumpasn1 (Gutmann annotated) style.",
+                DUMP_EX2_SQL,
+                DUMP_EX2_DESC,
             )
         } else {
             (
@@ -239,8 +279,8 @@ impl ScalarFunction for Dump {
                  `asn1parse` style (offset, depth, header/length, tag name, primitive value). A \
                  malformed blob renders a parse-error line, never an error. Pass a second argument \
                  to choose the 'dumpasn1' style.",
-                "SELECT asn1.main.dump(from_hex('3003020105')) AS text;",
-                "Produce an openssl-asn1parse-style dump of a DER `SEQUENCE { INTEGER 5 }`.",
+                DUMP_EX1_SQL,
+                DUMP_EX1_DESC,
             )
         };
         FunctionMetadata {
@@ -251,7 +291,7 @@ impl ScalarFunction for Dump {
                 description: example_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
+            tags: dump_tags(crate::meta::object_tags(
                 "ASN.1 Dump",
                 "Render a BER/CER/DER blob as an indented human-debug TLV dump — the primary \
                  triage surface, preserving tags, lengths, raw bytes, and indefinite-length \
@@ -264,7 +304,7 @@ impl ScalarFunction for Dump {
                 "asn1, dump, asn1parse, openssl, dumpasn1, tlv, triage, debug, hex",
                 "scalar/generic.rs",
                 crate::meta::CAT_GENERIC,
-            ),
+            )),
             ..Default::default()
         }
     }
@@ -346,17 +386,24 @@ impl ScalarFunction for TlvFn {
                     .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "ASN.1 TLV Nodes",
-                "Flatten a BER/CER/DER blob into a LIST of every TLV node in document order — \
-                 STRUCT(path, class, tag, tag_name, constructed, header_len, len, value) where \
-                 `path` is a JSONPath-ish locator (e.g. `$.0.2`) and `value` is the node's JSON \
-                 value. The escape hatch for callers who want the raw structure without type \
-                 inference. Empty list for a malformed blob.",
-                "List the TLV nodes of a blob, e.g. `tlv(payload)`.",
-                "asn1, tlv, nodes, path, class, tag, length, walk, structure, ber, der",
-                "scalar/generic.rs",
-                crate::meta::CAT_GENERIC,
+            tags: with_examples(
+                crate::meta::object_tags(
+                    "ASN.1 TLV Nodes",
+                    "Flatten a BER/CER/DER blob into a `LIST` of every TLV node in document order — \
+                     `STRUCT(path, class, tag, tag_name, constructed, header_len, len, value)` \
+                     where `path` is a JSONPath-ish locator (e.g. `$.0.2`) and `value` is the \
+                     node's JSON value. The escape hatch for callers who want the raw structure \
+                     without type inference. Empty list for a malformed blob.",
+                    "List the TLV nodes of a blob, e.g. `tlv(payload)`.",
+                    "asn1, tlv, nodes, path, class, tag, length, walk, structure, ber, der",
+                    "scalar/generic.rs",
+                    crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "List every TLV node of a DER `SEQUENCE { INTEGER 5 }` (the SEQUENCE and its \
+                     child INTEGER).",
+                    "SELECT asn1.main.tlv(from_hex('3003020105')) AS nodes;",
+                )],
             ),
             ..Default::default()
         }
@@ -417,16 +464,23 @@ impl ScalarFunction for AtPath {
                         .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "ASN.1 Value at Path",
-                "Return the decoded JSON value of the node located at `path` within a BER/CER/DER \
-                 blob. `path` is the JSONPath-ish locator produced by `tlv()` (e.g. `$` for the \
-                 root, `$.0.2` for the third child of the first child). Returns JSON `null` when \
-                 the path does not resolve or the blob is malformed.",
-                "Get the value at a node path, e.g. `at_path(payload, '$.0.2')`.",
-                "asn1, at_path, path, jsonpath, node, navigate, extract, ber, der",
-                "scalar/generic.rs",
-                crate::meta::CAT_GENERIC,
+            tags: with_examples(
+                crate::meta::object_tags(
+                    "ASN.1 Value at Path",
+                    "Return the decoded JSON value of the node located at `path` within a \
+                     BER/CER/DER blob. `path` is the JSONPath-ish locator produced by `tlv()` \
+                     (e.g. `$` for the root, `$.0.2` for the third child of the first child). \
+                     Returns JSON `null` when the path does not resolve or the blob is malformed.",
+                    "Get the value at a node path, e.g. `at_path(payload, '$.0.2')`.",
+                    "asn1, at_path, path, jsonpath, node, navigate, extract, ber, der",
+                    "scalar/generic.rs",
+                    crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Pull the node at path '$.0' (the first child — the INTEGER) of a DER \
+                     `SEQUENCE { INTEGER 5 }`.",
+                    "SELECT asn1.main.at_path(from_hex('3003020105'), '$.0') AS node;",
+                )],
             ),
             ..Default::default()
         }
@@ -501,17 +555,25 @@ impl ScalarFunction for Oids {
                     .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "ASN.1 OID Inventory",
-                "Return every OBJECT IDENTIFIER in a BER/CER/DER blob as a LIST of STRUCT(oid, \
-                 name, path): the dotted OID, its friendly name resolved from the bundled \
-                 registry (NULL if unknown), and its node path. The inventory / join surface — \
-                 e.g. find every blob using a deprecated `sha1WithRSAEncryption` signature. Empty \
-                 list for a malformed blob.",
-                "Inventory the OIDs in a blob, e.g. `oids(data)`.",
-                "asn1, oids, object identifier, inventory, algorithm, signature, audit, join",
-                "scalar/generic.rs",
-                crate::meta::CAT_GENERIC,
+            tags: with_examples(
+                crate::meta::object_tags(
+                    "ASN.1 OID Inventory",
+                    "Return every OBJECT IDENTIFIER in a BER/CER/DER blob as a `LIST` of \
+                     `STRUCT(oid, name, path)`: the dotted OID, its friendly name resolved from \
+                     the bundled registry (NULL if unknown), and its node path. The inventory / \
+                     join surface — e.g. find every blob using a deprecated \
+                     `sha1WithRSAEncryption` signature. Empty list for a malformed blob.",
+                    "Inventory the OIDs in a blob, e.g. `oids(data)`.",
+                    "asn1, oids, object identifier, inventory, algorithm, signature, audit, join",
+                    "scalar/generic.rs",
+                    crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Inventory every OID in an AlgorithmIdentifier blob — here \
+                     1.2.840.113549.1.1.11 (sha256WithRSAEncryption), with its resolved name and \
+                     node path.",
+                    "SELECT asn1.main.oids(from_hex('300d06092a864886f70d01010b0500')) AS oids;",
+                )],
             ),
             ..Default::default()
         }
@@ -569,7 +631,8 @@ impl ScalarFunction for OidName {
                 description: "Resolve an OID to 'sha256WithRSAEncryption'.".into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
+            tags: with_examples(
+                crate::meta::object_tags(
                 "Resolve OID to Friendly Name",
                 "Resolve a dotted OBJECT IDENTIFIER (e.g. '1.2.840.113549.1.1.11') to its friendly \
                  name (e.g. 'sha256WithRSAEncryption') from the bundled registry of signature/digest \
@@ -579,6 +642,11 @@ impl ScalarFunction for OidName {
                 "oid, oid_name, object identifier, name, resolve, registry, algorithm",
                 "scalar/generic.rs",
                 crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Resolve an OID to 'sha256WithRSAEncryption'.",
+                    "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
+                )],
             ),
             ..Default::default()
         }
@@ -634,7 +702,8 @@ impl ScalarFunction for OidFn {
                 description: "Resolve a name to '2.5.4.3'.".into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
+            tags: with_examples(
+                crate::meta::object_tags(
                 "Name → OID",
                 "Resolve a friendly OID name (e.g. 'sha256WithRSAEncryption', case-insensitive) to \
                  its dotted OBJECT IDENTIFIER (e.g. '1.2.840.113549.1.1.11') from the bundled \
@@ -643,6 +712,11 @@ impl ScalarFunction for OidFn {
                 "oid, name to oid, object identifier, dotted, resolve, registry, lookup",
                 "scalar/generic.rs",
                 crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Resolve a name to '2.5.4.3'.",
+                    "SELECT asn1.main.oid('id-at-commonName');",
+                )],
             ),
             ..Default::default()
         }
@@ -697,9 +771,8 @@ impl ScalarFunction for IsValid {
                 "Whether a blob is well-formed under an explicit `rules` ∈ {ber, cer, der}; der/cer \
                  also enforce canonical constraints (minimal lengths, no indefinite length). NULL \
                  → NULL; a malformed blob returns FALSE, never an error.",
-                "SELECT asn1.main.is_valid(from_hex('3003020105'), 'der') AS valid;",
-                "Check that a DER `SEQUENCE { INTEGER 5 }` is valid under the strict DER rules \
-                 (returns true).",
+                ISVALID_EX2_SQL,
+                ISVALID_EX2_DESC,
             )
         } else {
             (
@@ -707,8 +780,8 @@ impl ScalarFunction for IsValid {
                  minimal lengths, no indefinite length). NULL → NULL; a malformed blob returns \
                  FALSE, never an error. Pass a second argument to validate as 'ber' or 'cer' \
                  instead.",
-                "SELECT asn1.main.is_valid(from_hex('3003020105')) AS valid;",
-                "Check that a DER `SEQUENCE { INTEGER 5 }` is well-formed (returns true).",
+                ISVALID_EX1_SQL,
+                ISVALID_EX1_DESC,
             )
         };
         FunctionMetadata {
@@ -719,7 +792,7 @@ impl ScalarFunction for IsValid {
                 description: example_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
+            tags: is_valid_tags(crate::meta::object_tags(
                 "ASN.1 Valid?",
                 "Return whether a blob is well-formed under the named encoding rules. The optional \
                  second argument `rules` is 'der' (default), 'cer', or 'ber'; 'der'/'cer' \
@@ -730,7 +803,7 @@ impl ScalarFunction for IsValid {
                 "asn1, is_valid, validate, der, ber, cer, canonical, well-formed",
                 "scalar/generic.rs",
                 crate::meta::CAT_GENERIC,
-            ),
+            )),
             ..Default::default()
         }
     }
@@ -803,18 +876,27 @@ impl ScalarFunction for WellFormed {
                     .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "ASN.1 Well-Formed",
-                "Return the structured well-formedness of a blob: STRUCT(ok, error, kind). On \
-                 failure `ok` is false and `kind` classifies the problem — truncated, \
-                 trailing-bytes, invalid-tag, length-overflow, indefinite-in-der, non-canonical, \
-                 bad-time, bad-oid, bad-utf8, nesting-limit, or alloc-limit — with a human `error` \
-                 message. Total: a malformed (even hostile) blob returns ok=false, never crashing \
-                 the scan; NULL input yields a NULL struct.",
-                "Triage a blob's well-formedness with a failure kind, e.g. `well_formed(data)`.",
-                "asn1, well_formed, validate, error kind, truncated, length overflow, triage, robust",
-                "scalar/generic.rs",
-                crate::meta::CAT_GENERIC,
+            tags: with_examples(
+                crate::meta::object_tags(
+                    "ASN.1 Well-Formed",
+                    "Return the structured well-formedness of a blob: `STRUCT(ok, error, kind)`. \
+                     On failure `ok` is false and `kind` classifies the problem — truncated, \
+                     trailing-bytes, invalid-tag, length-overflow, indefinite-in-der, \
+                     non-canonical, bad-time, bad-oid, bad-utf8, nesting-limit, or alloc-limit — \
+                     with a human `error` message. Total: a malformed (even hostile) blob returns \
+                     ok=false, never crashing the scan; NULL input yields a NULL struct.",
+                    "Triage a blob's well-formedness with a failure kind, e.g. \
+                     `well_formed(data)`.",
+                    "asn1, well_formed, validate, error kind, truncated, length overflow, triage, \
+                     robust",
+                    "scalar/generic.rs",
+                    crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Triage a DER `SEQUENCE { INTEGER 5 }`: returns STRUCT(ok=true, error=NULL, \
+                     kind=NULL).",
+                    "SELECT asn1.main.well_formed(from_hex('3003020105')) AS w;",
+                )],
             ),
             ..Default::default()
         }
@@ -902,17 +984,24 @@ impl ScalarFunction for ToDer {
                         .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "Canonicalize to DER",
-                "Re-encode a parsed BER / CER blob to canonical DER: definite minimal-length \
+            tags: with_examples(
+                crate::meta::object_tags(
+                    "Canonicalize to DER",
+                    "Re-encode a parsed BER / CER blob to canonical DER: definite minimal-length \
                  encodings, indefinite forms collapsed, and SET OF children sorted by their \
                  encoding. Idempotent on DER input and round-trips through decode — useful for \
                  normalizing captured BER before hashing or fingerprinting. NULL or a malformed \
                  blob yields NULL.",
-                "Re-encode a blob to canonical DER, e.g. `to_der(payload)`.",
-                "asn1, to_der, canonical, der, reencode, normalize, fingerprint, ber to der",
-                "scalar/generic.rs",
-                crate::meta::CAT_GENERIC,
+                    "Re-encode a blob to canonical DER, e.g. `to_der(payload)`.",
+                    "asn1, to_der, canonical, der, reencode, normalize, fingerprint, ber to der",
+                    "scalar/generic.rs",
+                    crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Canonicalize a blob to DER; an already-canonical `SEQUENCE { INTEGER 5 }` \
+                     round-trips to the same bytes.",
+                    "SELECT asn1.main.to_der(from_hex('3003020105')) AS der;",
+                )],
             ),
             ..Default::default()
         }
@@ -964,17 +1053,16 @@ impl ScalarFunction for Reencode {
                 "Re-encode a parsed blob to the target rules set named by the second argument \
                  (currently canonical DER for any 'der'/'cer'/'ber' value). NULL → NULL; a \
                  malformed blob → NULL.",
-                "SELECT asn1.main.reencode(from_hex('3003020105'), 'der') AS der;",
-                "Re-encode a blob to canonical DER under an explicit 'der' rules set.",
+                REENCODE_EX2_SQL,
+                REENCODE_EX2_DESC,
             )
         } else {
             (
                 "Re-encode a parsed blob to canonical DER (definite minimal lengths, sorted SET \
                  OF). NULL → NULL; a malformed blob → NULL. Pass a second 'rules' argument to name \
                  the target encoding explicitly.",
-                "SELECT asn1.main.reencode(from_hex('3003020105')) AS der;",
-                "Re-encode a blob to canonical DER (an already-canonical SEQUENCE round-trips \
-                 unchanged).",
+                REENCODE_EX1_SQL,
+                REENCODE_EX1_DESC,
             )
         };
         FunctionMetadata {
@@ -985,7 +1073,7 @@ impl ScalarFunction for Reencode {
                 description: example_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
+            tags: reencode_tags(crate::meta::object_tags(
                 "Re-encode ASN.1",
                 "Re-encode a parsed BER / CER / DER blob to a target rules set named by the second \
                  argument `rules` ('der'/'cer'/'ber'). The worker canonicalizes to DER (definite \
@@ -995,7 +1083,7 @@ impl ScalarFunction for Reencode {
                 "asn1, reencode, der, ber, cer, canonical, normalize, rules",
                 "scalar/generic.rs",
                 crate::meta::CAT_GENERIC,
-            ),
+            )),
             ..Default::default()
         }
     }
@@ -1068,15 +1156,22 @@ impl ScalarFunction for PemLabel {
                     .into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "Detect a PEM Block's Label",
-                "Return the label of the first `-----BEGIN <label>-----` block in a PEM text \
-                 (e.g. 'CERTIFICATE', 'PRIVATE KEY'), or NULL when the text contains no PEM block. \
-                 Use pem_decode() to split a bundle into its DER blocks.",
-                "Get the first PEM block's label, e.g. `pem_label(armor)` → 'CERTIFICATE'.",
-                "pem, pem_label, armor, begin, certificate, private key, label",
-                "scalar/generic.rs",
-                crate::meta::CAT_GENERIC,
+            tags: with_examples(
+                crate::meta::object_tags(
+                    "Detect a PEM Block's Label",
+                    "Return the label of the first `-----BEGIN <label>-----` block in a PEM text \
+                     (e.g. 'CERTIFICATE', 'PRIVATE KEY'), or NULL when the text contains no PEM \
+                     block. Use pem_decode() to split a bundle into its DER blocks.",
+                    "Get the first PEM block's label, e.g. `pem_label(armor)` → 'CERTIFICATE'.",
+                    "pem, pem_label, armor, begin, certificate, private key, label",
+                    "scalar/generic.rs",
+                    crate::meta::CAT_GENERIC,
+                ),
+                &[(
+                    "Identify the label of the first PEM block in a text (returns 'CERTIFICATE').",
+                    "SELECT asn1.main.pem_label('-----BEGIN CERTIFICATE-----' || chr(10) || \
+                     'MIIBAg==' || chr(10) || '-----END CERTIFICATE-----') AS label;",
+                )],
             ),
             ..Default::default()
         }

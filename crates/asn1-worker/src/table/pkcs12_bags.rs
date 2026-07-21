@@ -53,6 +53,13 @@ impl TableFunction for Pkcs12Bags {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql = "SELECT bag_type, encrypted, cert_sha256 \
+                      FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a0\
+                      3f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a01\
+                      03a0173015060a2a864886f70d01091601a00704053003020105')) \
+                      ORDER BY bag_type;";
+        let ex_desc = "Walk a minimal PKCS#12 PFX and list each SafeBag's type, encryption flag, \
+                       and (for cert bags) the vgi-x509 join hash.";
         let mut tags = crate::meta::object_tags(
             "PKCS#12 Bags",
             "Walk a PKCS#12 keystore (PFX → AuthenticatedSafe → SafeContents → SafeBag) into one \
@@ -97,18 +104,15 @@ impl TableFunction for Pkcs12Bags {
                 ),
             ]),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Walk a PKCS#12 keystore into one row per SafeBag".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT bag_type, encrypted, cert_sha256 \
-                      FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a0\
-                      3f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a01\
-                      03a0173015060a2a864886f70d01091601a00704053003020105')) \
-                      ORDER BY bag_type;"
-                    .into(),
-                description: "Walk a minimal PKCS#12 PFX and list each SafeBag's type, encryption \
-                              flag, and (for cert bags) the vgi-x509 join hash."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,

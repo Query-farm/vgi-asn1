@@ -22,7 +22,16 @@ macro_rules! json_blob_scalar {
                         description: $ex_desc.into(),
                         expected_output: None,
                     }],
-                    tags: crate::meta::object_tags($title, $llm, $md, $kw, $src, $cat),
+                    tags: {
+                        let mut tags = crate::meta::object_tags($title, $llm, $md, $kw, $src, $cat);
+                        // Described-example carrier (VGI515): the native
+                        // Meta.examples column drops the description.
+                        tags.push((
+                            "vgi.example_queries".to_string(),
+                            crate::meta::example_queries_json(&[($ex_desc, $ex_sql)]),
+                        ));
+                        tags
+                    },
                     ..Default::default()
                 }
             }

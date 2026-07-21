@@ -29,7 +29,7 @@ use std::sync::Arc;
 use vgi::catalog::{CatSchema, CatTable, CatalogModel};
 use vgi::Worker;
 
-/// Worker version string, surfaced by `asn1_version()`.
+/// Worker build version, surfaced as the catalog's `implementation_version`.
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
@@ -301,13 +301,6 @@ fn agent_test_tasks() -> Vec<meta::AgentTask> {
             "SELECT name FROM asn1.main.oid_registry WHERE oid = '1.2.840.113549.1.1.11'",
             Some("The registry maps that OID to 'sha256WithRSAEncryption'."),
         ),
-        t(
-            "worker_version_present",
-            "Does the asn1 worker report a non-null version string? Return a single boolean \
-             column named present.",
-            "SELECT asn1.main.asn1_version() IS NOT NULL AS present",
-            Some("The worker always reports a version, so present is true."),
-        ),
     ]
 }
 
@@ -364,10 +357,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  are surfaced (algorithm OID + bytes) but never verified or decrypted, and PKCS#8/\
                  #12 never expose plaintext key material. Decoding is robust against hostile input: \
                  bounded recursion and allocation, and per-row error capture (`well_formed` \
-                 classifies the failure `kind`) so a malformed blob never aborts a scan.\n\n\
-                 Part of the [Query.Farm](https://query.farm) VGI ecosystem — see the \
-                 [repository](https://github.com/Query-farm/vgi-asn1) for the full function \
-                 catalog and examples."
+                 classifies the failure `kind`) so a malformed blob never aborts a scan."
                     .to_string(),
             ),
             (
@@ -390,6 +380,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
         ],
         source_url: Some("https://github.com/Query-farm/vgi-asn1".to_string()),
+        // The worker build version, surfaced via `catalog_catalogs().implementation_version`
+        // (VGI328: publish the version as catalog metadata rather than as a parameterless
+        // `asn1_version()` scalar that spends a surface slot duplicating it).
+        implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
             comment: Some(
@@ -443,13 +437,35 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ),
                 (
                     "vgi.example_queries".to_string(),
-                    "SELECT asn1.main.decode(from_hex('3003020105'));\n\
-                     SELECT asn1.main.to_json(from_hex('3003020105'));\n\
-                     SELECT asn1.main.dump(from_hex('3003020105'));\n\
-                     SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');\n\
-                     SELECT (asn1.main.well_formed(from_hex('300502'))).ok;\n\
-                     SELECT asn1.main.is_valid(from_hex('020105'), 'der');"
-                        .to_string(),
+                    crate::meta::example_queries_json(&[
+                        (
+                            "Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON \
+                             projection.",
+                            "SELECT asn1.main.decode(from_hex('3003020105'));",
+                        ),
+                        (
+                            "Project the same blob into self-describing JSON, one object per TLV \
+                             node.",
+                            "SELECT asn1.main.to_json(from_hex('3003020105'));",
+                        ),
+                        (
+                            "Render an `openssl asn1parse`-style indented text dump of the blob.",
+                            "SELECT asn1.main.dump(from_hex('3003020105'));",
+                        ),
+                        (
+                            "Resolve a dotted OID to its friendly algorithm name \
+                             ('sha256WithRSAEncryption').",
+                            "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
+                        ),
+                        (
+                            "Triage a truncated blob — `well_formed(...).ok` is false.",
+                            "SELECT (asn1.main.well_formed(from_hex('300502'))).ok;",
+                        ),
+                        (
+                            "Validate a bare INTEGER 5 under strict DER encoding rules.",
+                            "SELECT asn1.main.is_valid(from_hex('020105'), 'der');",
+                        ),
+                    ]),
                 ),
                 (
                     "vgi.executable_examples".to_string(),

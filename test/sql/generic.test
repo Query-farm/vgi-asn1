@@ -2,7 +2,7 @@
 # group: [vgi_asn1]
 #
 # Generic ASN.1 codec scalars: decode / to_json / dump / oids / oid_name / oid /
-# is_valid / well_formed / asn1_version. Fixtures are passed as from_hex() so the
+# is_valid / well_formed. Fixtures are passed as from_hex() so the
 # suite needs no external files. Uses `LOAD vgi` (never `require vgi`).
 
 require-env VGI_ASN1_WORKER
@@ -87,9 +87,10 @@ SELECT (well_formed(from_hex('0484ffffffff'))).kind;
 ----
 length-overflow
 
-# Version is reported.
+# The worker build version is surfaced as catalog metadata
+# (catalog_catalogs().implementation_version), not as a scalar function.
 query T
-SELECT asn1_version() IS NOT NULL;
+SELECT implementation_version IS NOT NULL FROM vgi_catalogs('${VGI_ASN1_WORKER}');
 ----
 true
 

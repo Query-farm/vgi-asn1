@@ -48,6 +48,12 @@ impl TableFunction for SnmpVarbinds {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql = "SELECT oid, oid_name, type \
+                      FROM asn1.main.snmp_varbinds(from_hex('302e02010104067075626c6963a2210201\
+                      010201000201003016301406082b060102010101000408526f757465724f53')) \
+                      ORDER BY oid;";
+        let ex_desc = "Shred an SNMP v2c GetResponse into its varbinds and project each OID, \
+                       resolved name, and SMI type.";
         let mut tags = crate::meta::object_tags(
             "SNMP Varbinds",
             "Fan one SNMP PDU (RFC 1157/3416) into one row per varbind: the PDU request_id and \
@@ -87,17 +93,15 @@ impl TableFunction for SnmpVarbinds {
                 ("value", "VARCHAR", "The varbind value as JSON."),
             ]),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "Fan an SNMP PDU into one row per varbind".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT oid, oid_name, type \
-                      FROM asn1.main.snmp_varbinds(from_hex('302e02010104067075626c6963a2210201\
-                      010201000201003016301406082b060102010101000408526f757465724f53')) \
-                      ORDER BY oid;"
-                    .into(),
-                description: "Shred an SNMP v2c GetResponse into its varbinds and project each \
-                              OID, resolved name, and SMI type."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,

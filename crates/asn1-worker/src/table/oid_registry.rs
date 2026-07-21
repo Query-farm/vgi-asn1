@@ -40,6 +40,9 @@ impl TableFunction for OidRegistry {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let ex_sql = "SELECT name FROM asn1.main.oid_registry \
+                      WHERE oid = '1.2.840.113549.1.1.11';";
+        let ex_desc = "Look up a single OID's friendly name by browsing the registry table.";
         let mut tags = crate::meta::object_tags(
             "OID Registry",
             "The complete curated OBJECT IDENTIFIER → friendly-name registry the worker ships, \
@@ -66,15 +69,15 @@ impl TableFunction for OidRegistry {
                 ),
             ]),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
         FunctionMetadata {
             description: "The curated OID → friendly-name registry as a table".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT name FROM asn1.main.oid_registry \
-                      WHERE oid = '1.2.840.113549.1.1.11';"
-                    .into(),
-                description: "Look up a single OID's friendly name by browsing the registry \
-                              table."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,
