@@ -153,4 +153,8 @@ impl TableProducer for PemProducer {
                 .map_err(|e| RpcError::runtime_error(e.to_string()))?,
         ))
     }
+    fn resume_supported(&self) -> bool {
+        // Single batch: every PEM block is decoded at producer() time, so there is no cursor to resume.
+        false
+    }
 }

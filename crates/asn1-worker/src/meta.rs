@@ -19,20 +19,12 @@ pub fn keywords_json(keywords: &str) -> String {
 
 /// One catalog-level `vgi.agent_test_tasks` task run by `vgi-lint simulate`.
 ///
-/// Only `prompt` is shown to the analyst; `reference_sql` and `success_criteria`
-/// are **grader-only** (never surfaced) — one exercises the object for coverage
-/// and grades the analyst's answer, the other is an LLM-judge fallback rubric.
+/// Only `name` and `prompt` are published. The grader-only fields
+/// (`reference_sql`, `success_criteria`) live in `vgi-agent-tests.yaml` at the
+/// repo root, keyed by task name, so they are never surfaced (VGI416).
 pub struct AgentTask {
     pub name: &'static str,
     pub prompt: &'static str,
-    /// Canonical deterministic solution (grader-only). Verified against the live
-    /// worker so exact-compare grading is sound.
-    pub reference_sql: &'static str,
-    /// Optional LLM-judge rubric (grader-only) — a tier-3 fallback so a correct
-    /// answer shaped differently from `reference_sql` still passes.
-    pub success_criteria: Option<&'static str>,
-    /// Relax strict row-order comparison for multi-row references.
-    pub unordered: bool,
 }
 
 /// Build the `vgi.agent_test_tasks` JSON array (VGI407) from [`AgentTask`]s.
@@ -43,13 +35,6 @@ pub fn agent_test_tasks_json(tasks: &[AgentTask]) -> String {
             let mut obj = serde_json::Map::new();
             obj.insert("name".into(), t.name.into());
             obj.insert("prompt".into(), t.prompt.into());
-            obj.insert("reference_sql".into(), t.reference_sql.into());
-            if let Some(sc) = t.success_criteria {
-                obj.insert("success_criteria".into(), sc.into());
-            }
-            if t.unordered {
-                obj.insert("unordered".into(), true.into());
-            }
             serde_json::Value::Object(obj)
         })
         .collect();

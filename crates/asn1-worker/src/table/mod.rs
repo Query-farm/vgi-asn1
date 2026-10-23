@@ -62,6 +62,11 @@ impl TableProducer for SingleBatch {
     fn next_batch(&mut self, _out: &mut OutputCollector) -> Result<Option<RecordBatch>> {
         Ok(self.batch.take())
     }
+
+    fn resume_supported(&self) -> bool {
+        // One prebuilt batch: there is no cursor to resume.
+        false
+    }
 }
 
 /// Helper to box a one-shot producer from a built batch.

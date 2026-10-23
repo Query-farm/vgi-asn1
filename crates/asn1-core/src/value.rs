@@ -299,8 +299,10 @@ pub fn decode_string(tag: u32, bytes: &[u8]) -> Option<String> {
                 return None;
             }
             let units: Vec<u16> = bytes
-                .chunks_exact(2)
-                .map(|c| u16::from_be_bytes([c[0], c[1]]))
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .map(|c| u16::from_be_bytes(*c))
                 .collect();
             Some(String::from_utf16_lossy(&units))
         }
@@ -310,8 +312,8 @@ pub fn decode_string(tag: u32, bytes: &[u8]) -> Option<String> {
                 return None;
             }
             let mut s = String::new();
-            for c in bytes.chunks_exact(4) {
-                let cp = u32::from_be_bytes([c[0], c[1], c[2], c[3]]);
+            for c in bytes.as_chunks::<4>().0 {
+                let cp = u32::from_be_bytes(*c);
                 s.push(char::from_u32(cp).unwrap_or('\u{fffd}'));
             }
             Some(s)
