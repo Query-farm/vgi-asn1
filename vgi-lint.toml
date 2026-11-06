@@ -1,7 +1,7 @@
 # vgi-lint configuration for the vgi-asn1 worker.
 #
 # The metadata-quality gate runs in CI via the reusable
-# `Query-farm/vgi-lint-check@v1` action against the built worker binary at
+# `Query-farm/vgi-lint-check@v2` action against the built worker binary at
 # `--fail-on info` (see .github/workflows/ci.yml). This file pins the same
 # strictness locally so `vgi-lint` run by hand matches CI.
 #

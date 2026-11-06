@@ -9,13 +9,13 @@ A [VGI](https://query.farm) worker (Rust, compiled binary) that decodes generic
 ASN.1 BER/CER/DER and the named security/telecom modules (SNMP, Kerberos, LDAP,
 CMS/PKCS#7, PKCS#8/#12, OCSP) to DuckDB over Arrow IPC
 (`ATTACH 'asn1' (TYPE vgi, LOCATION '…')`). Functions live under catalog `asn1`,
-schema `main`. Built on the published `vgi = "0.46"` SDK, arrow 60. Modeled on
+schema `main`. Built on the published `vgi = "0.49.2"` SDK (VGI protocol 3.1; needs haybarn 2.0), arrow 59. Modeled on
 `../vgi-units` and `../vgi-fixedformat`.
 
 ## Layout
 
 ```
-Cargo.toml                          workspace; vgi 0.46, arrow 60, no path deps to the SDK
+Cargo.toml                          workspace; vgi 0.49.2, arrow 59, no path deps to the SDK
 crates/asn1-core/                   PURE engine (no Arrow / no VGI)
   src/tlv.rs                        generic BER/CER/DER TLV reader → Tlv tree; bounded recursion/alloc; never panics
   src/value.rs                      integer(bignum→string)/bool/time(→ISO+epoch µs)/string/bitstring interpretation
@@ -103,4 +103,4 @@ HAYBARN_UNITTEST=$(which haybarn-unittest) WORKER_BIN=$PWD/target/release/asn1-w
 
 CI (`.github/workflows/ci.yml`) runs fmt/clippy/build/test, the `test/sql/*`
 suite over the subprocess/http/unix × ubuntu/macos matrix, and the
-`Query-farm/vgi-lint-check@v1` metadata gate at `--fail-on info`.
+`Query-farm/vgi-lint-check@v2` metadata gate at `--fail-on info`.

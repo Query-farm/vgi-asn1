@@ -27,6 +27,7 @@ mod table;
 use std::sync::Arc;
 
 use vgi::catalog::{CatSchema, CatTable, CatalogModel};
+use vgi::constraints::{constraint_record, ConstraintKind, ConstraintRecord};
 use vgi::Worker;
 
 /// Worker build version, surfaced as the catalog's `implementation_version`.
@@ -431,8 +432,25 @@ fn oid_registry_table() -> CatTable {
     );
     // Honest constraints: every row has both fields and `oid` is the unique key
     // (the registry resolves each dotted OID to exactly one name).
-    t.not_null = vec![0, 1];
-    t.primary_key = vec![vec![0]];
+    t.constraints = [
+        ("oid_registry.pk", ConstraintKind::PrimaryKey, "oid"),
+        ("oid_registry.oid.not_null", ConstraintKind::NotNull, "oid"),
+        (
+            "oid_registry.name.not_null",
+            ConstraintKind::NotNull,
+            "name",
+        ),
+    ]
+    .into_iter()
+    .map(|(id, kind, column)| {
+        constraint_record(
+            &ConstraintRecord::new(&["main"], "oid_registry", id, kind)
+                .with_columns(&[&[column]])
+                .enforced(),
+        )
+        .expect("valid constraint record")
+    })
+    .collect();
     t.tags = tags;
     t
 }
