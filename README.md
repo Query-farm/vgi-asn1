@@ -19,7 +19,7 @@ compute over a `BLOB` column — no network, no state, **no crypto verification*
 
 ```sql
 LOAD vgi;
-ATTACH 'asn1' (TYPE vgi, LOCATION './target/release/asn1-worker');
+ATTACH 'asn1' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-asn1@v0.2.1');
 SET search_path = 'asn1.main';
 
 -- Decode any BER/DER blob to JSON, to self-describing JSON, and to a dump.
@@ -37,6 +37,39 @@ SELECT well_formed(data) FROM unknown_blobs WHERE NOT (well_formed(data)).ok;
 SELECT s.digest_alg, s.sig_alg, s.signing_time, s.signer_cert_sha256
 FROM asn1.main.cms_signers(read_blob('codesign.p7s')) s;
 ```
+
+## Quick start
+
+Every [GitHub release](https://github.com/Query-farm/vgi-asn1/releases) ships a prebuilt worker binary. The `vgi` extension downloads the one for your platform, checks its SHA-256 and caches it, so there is nothing to install besides DuckDB:
+
+```sql
+INSTALL vgi FROM community;
+LOAD vgi;
+
+ATTACH 'asn1' AS asn1 (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-asn1@v0.2.1');
+
+-- Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON projection.
+SELECT asn1.main.decode(from_hex('3003020105'));
+
+-- Project the same blob into self-describing JSON, one object per TLV node.
+SELECT asn1.main.to_json(from_hex('3003020105'));
+```
+
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64) and Windows (x86-64). `github-auto://` needs an explicit release tag; change `@v0.2.1` to move to a newer release.
+
+### Other ways to run it
+
+- **Docker** (the image bundles the worker; needs a container runtime):
+
+  ```sql
+  ATTACH 'asn1' AS asn1 (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-asn1:0.2.1');
+  ```
+
+- **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-asn1/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.
+
+### Build from source
+
+To build the worker yourself and attach the local binary, see [Build & run](#build--run) and [Test](#test).
 
 ## What it does
 
