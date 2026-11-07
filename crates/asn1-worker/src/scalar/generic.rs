@@ -898,6 +898,7 @@ impl ScalarFunction for WellFormed {
                     "SELECT asn1.main.well_formed(from_hex('3003020105')) AS w;",
                 )],
             ),
+            return_type: Some(DataType::Struct(well_formed_fields())),
             ..Default::default()
         }
     }

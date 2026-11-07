@@ -164,6 +164,7 @@ impl ScalarFunction for KrbTicket {
                 ));
                 tags
             },
+            return_type: Some(DataType::Struct(krb_ticket_fields())),
             ..Default::default()
         }
     }
@@ -303,6 +304,7 @@ impl ScalarFunction for Pkcs8Info {
                 ));
                 tags
             },
+            return_type: Some(DataType::Struct(pkcs8_fields())),
             ..Default::default()
         }
     }
