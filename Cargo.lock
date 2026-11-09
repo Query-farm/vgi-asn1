@@ -282,7 +282,7 @@ dependencies = [
 
 [[package]]
 name = "asn1-core"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "base64 0.23.1",
  "proptest",
@@ -292,7 +292,7 @@ dependencies = [
 
 [[package]]
 name = "asn1-worker"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
