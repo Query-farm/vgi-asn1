@@ -268,6 +268,7 @@ pub mod test_support {
             pushdown_filters: None,
             join_keys: Vec::new(),
             storage: None,
+            transaction_opaque_data: None,
             order_by_column: None,
             order_by_direction: None,
             order_by_null_order: None,
