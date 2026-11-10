@@ -225,7 +225,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         tags: vec![
             (
                 "vgi.title".to_string(),
-                "ASN.1 BER/DER Decoder & Security-Payload Shredder".to_string(),
+                "ASN.1 Decoder".to_string(),
+            ),
+            (
+                "vgi.subtitle".to_string(),
+                "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP                  messages into SQL rows."
+                    .to_string(),
             ),
             (
                 "vgi.keywords".to_string(),
@@ -301,7 +306,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
-                ("vgi.title".to_string(), "ASN.1 — main".to_string()),
+                ("vgi.title".to_string(), "ASN.1 Functions".to_string()),
                 (
                     "vgi.categories".to_string(),
                     crate::meta::categories_json(),
