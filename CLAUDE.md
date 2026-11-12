@@ -9,13 +9,13 @@ A [VGI](https://query.farm) worker (Rust, compiled binary) that decodes generic
 ASN.1 BER/CER/DER and the named security/telecom modules (SNMP, Kerberos, LDAP,
 CMS/PKCS#7, PKCS#8/#12, OCSP) to DuckDB over Arrow IPC
 (`ATTACH 'asn1' (TYPE vgi, LOCATION '…')`). Functions live under catalog `asn1`,
-schema `main`. Built on the published `vgi = "0.50.0"` SDK (VGI protocol 3.2; needs haybarn 2.0), arrow 59. Modeled on
+schema `main`. Built on the published `vgi = "0.51.0"` SDK (VGI protocol 3.3; needs haybarn 2.0), arrow 59. Modeled on
 `../vgi-units` and `../vgi-fixedformat`.
 
 ## Layout
 
 ```
-Cargo.toml                          workspace; vgi 0.50.0, arrow 59, no path deps to the SDK
+Cargo.toml                          workspace; vgi 0.51.0, arrow 59, no path deps to the SDK
 crates/asn1-core/                   PURE engine (no Arrow / no VGI)
   src/tlv.rs                        generic BER/CER/DER TLV reader → Tlv tree; bounded recursion/alloc; never panics
   src/value.rs                      integer(bignum→string)/bool/time(→ISO+epoch µs)/string/bitstring interpretation
