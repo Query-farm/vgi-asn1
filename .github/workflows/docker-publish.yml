@@ -28,6 +28,8 @@ jobs:
   # broken worker is never imaged.
   ci:
     uses: ./.github/workflows/ci.yml
+    with:
+      linux_only: true
 
   publish:
     needs: [ci]

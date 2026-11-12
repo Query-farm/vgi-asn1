@@ -8,6 +8,14 @@ on:
   # Allow release.yml / docker-publish.yml to run this exact suite as a gating
   # `uses:` job before they publish anything.
   workflow_call:
+    inputs:
+      linux_only:
+        # release / publish callers set this: the same commit already ran the
+        # full matrix (macOS included) on push, and the org's macOS runner pool
+        # is small, so tagged gates run Linux only.
+        description: Skip the macOS legs of the test matrix.
+        type: boolean
+        default: false
 
 concurrency:
   # Include github.workflow so a direct CI run and the `uses:`-embedded CI jobs
@@ -79,11 +87,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: ${{ inputs.linux_only && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
         transport: [subprocess, http, unix]
-        include:
-          - { os: ubuntu-latest, asset: haybarn_unittest-linux-amd64.zip }
-          - { os: macos-latest,  asset: haybarn_unittest-osx-arm64.zip }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -104,7 +109,7 @@ jobs:
         run: |
           gh release download "$HAYBARN_RELEASE" \
             --repo Query-farm-haybarn/haybarn \
-            --pattern '${{ matrix.asset }}' \
+            --pattern '${{ matrix.os == 'macos-latest' && 'haybarn_unittest-osx-arm64.zip' || 'haybarn_unittest-linux-amd64.zip' }}' \
             --output haybarn-unittest.zip --clobber
           mkdir -p hb && unzip -o -q haybarn-unittest.zip -d hb
         env:
