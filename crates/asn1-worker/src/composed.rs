@@ -31,11 +31,13 @@ pub const PEM_TRIAGE: Example = (
 pub const P12_CMS_CERT_MATCH: Example = (
     "Find the certificates a PKCS#12 keystore shares with a CMS SignedData: join the keystore's \
      cert bags (cert_sha256) to the SHA-256 of each certificate embedded in the signed message \
-     (cms_certs). Returns the one certBag whose certificate is also embedded in the message.",
+     (cms_certs). The keystore holds two certBags; only the one whose certificate is also \
+     embedded in the message (417c…d729) is returned.",
     "SELECT b.bag_type, b.cert_sha256 \
-     FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a03f043d303b30390609\
-     2a864886f70d010701a02c042a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a0\
-     0704053003020105')) AS b \
+     FROM asn1.main.pkcs12_bags(from_hex('\
+     3079020103307406092a864886f70d010701a06704653063306106092a864886f70d010701a054045230503026\
+     060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a007040530030201053026060b2a8648\
+     86f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020106')) AS b \
      JOIN (SELECT unnest(asn1.main.cms_certs(from_hex('304d0201013100301106092a864886f70d010701a004\
      04026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d\
      01010105000403aabbcc'))) AS cert) AS c ON sha256(c.cert) = b.cert_sha256 \

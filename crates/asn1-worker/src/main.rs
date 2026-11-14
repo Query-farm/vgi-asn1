@@ -224,10 +224,12 @@ fn agent_test_tasks() -> Vec<meta::AgentTask> {
         ),
         t(
             "keystore_certs_in_cms",
-            "How many certificate bags in the PKCS#12 PFX with hex \
-             3051020103304c06092a864886f70d010701a03f043d303b303906092a864886f70d010701a02c042\
-             a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020\
-             105 hold a certificate that is also embedded in the CMS SignedData with hex \
+            "The PKCS#12 PFX with hex \
+             3079020103307406092a864886f70d010701a06704653063306106092a864886f70d010701a0540452\
+             30503026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a007040530030201\
+             053026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020106 \
+             holds two certificate bags. How many of them hold a certificate that is also \
+             embedded in the CMS SignedData with hex \
              304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a0201018\
              00401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc \
              (match certificates by SHA-256)? Return a single BIGINT column named n.",
@@ -396,12 +398,12 @@ fn schema_examples() -> Vec<composed::Example> {
     let mut v: Vec<composed::Example> = vec![
         (
             "Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON \
-                             projection.",
+             projection.",
             "SELECT asn1.main.decode(from_hex('3003020105'));",
         ),
         (
             "Project the same blob into self-describing JSON, one object per TLV \
-                             node.",
+             node.",
             "SELECT asn1.main.to_json(from_hex('3003020105'));",
         ),
         (
@@ -410,7 +412,7 @@ fn schema_examples() -> Vec<composed::Example> {
         ),
         (
             "Resolve a dotted OID to its friendly algorithm name \
-                             ('sha256WithRSAEncryption').",
+             ('sha256WithRSAEncryption').",
             "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
         ),
         (
