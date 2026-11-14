@@ -1,0 +1,26 @@
+{
+  "repository": "Query-farm/vgi-asn1",
+  "title": "ASN.1 Decoder",
+  "subtitle": "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP                  messages into SQL rows.",
+  "evidence_sha256": "2c1e75ac294f272c36c7d929896118efa71be30264a826be21389ab9d9fc902a",
+  "provenance": "Actual catalog tags from the released runtime used by the notebook",
+  "worker_release": "v0.4.0",
+  "runtime_export": {
+    "attach": "ATTACH 'asn1' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-asn1@v0.4.0');",
+    "query": "SELECT database_name, comment, map_extract_value(tags,'vgi.title') AS title, map_extract_value(tags,'vgi.subtitle') AS subtitle FROM duckdb_databases() WHERE map_extract_value(tags,'vgi.title') IS NOT NULL",
+    "columns": [
+      "database_name",
+      "comment",
+      "title",
+      "subtitle"
+    ],
+    "rows": [
+      [
+        "asn1",
+        "Generic ASN.1 BER/CER/DER decode plus SNMP/Kerberos/LDAP/CMS/PKCS/OCSP structural decoders for SQL.",
+        "ASN.1 Decoder",
+        "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP                  messages into SQL rows."
+      ]
+    ]
+  }
+}
