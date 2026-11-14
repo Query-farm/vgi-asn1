@@ -1,0 +1,9 @@
+Shared notebook tools v0.3.6; complete default runs in fresh kernels.
+Updated vgi-example-notebooks v0.3.5 (cd954d17) -> v0.3.6 (31eb1be7)
+Running 01_same_values_different_bytes.ipynb ...
+OK: 21 code cells, 2 charts, 3.5s
+Running 02_nodes_paths_and_unknown_identifiers.ipynb ...
+OK: 15 code cells, 1 charts, 3.2s
+Running 03_pem_labels_and_body_validation.ipynb ...
+OK: 10 code cells, 1 charts, 2.9s
+All saved output cells are byte-identical to the previous publication. Analytical code is unchanged.
