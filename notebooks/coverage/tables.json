@@ -1,0 +1,50 @@
+{
+  "query": "SELECT * FROM duckdb_tables() WHERE database_name='asn1' ORDER BY schema_name,table_name",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "schema_oid",
+    "table_name",
+    "table_oid",
+    "comment",
+    "tags",
+    "internal",
+    "temporary",
+    "has_primary_key",
+    "estimated_size",
+    "column_count",
+    "index_count",
+    "check_constraint_count",
+    "sql"
+  ],
+  "rows": [
+    [
+      "asn1",
+      22592,
+      "main",
+      22754,
+      "oid_registry",
+      22755,
+      "The curated OBJECT IDENTIFIER \u2192 friendly-name registry as a browsable table (oid, name).",
+      {
+        "domain": "security-and-pki",
+        "topic": "asn1",
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "The complete curated OBJECT IDENTIFIER \u2192 friendly-name registry the worker ships, one row per known OID (oid, name). A browsable, no-argument entry point: it lists every OID that oid_name() resolves and oid() looks up, so an agent can learn the vocabulary before decoding any blob.",
+        "vgi.doc_md": "The curated OID \u2192 friendly-name registry as a directly-scannable table (`oid`, `name`). The table form of `oid_name()` / `oid()`.",
+        "vgi.example_queries": "[{\"description\":\"Resolve one OID to its friendly name by browsing the registry table.\",\"sql\":\"SELECT name FROM asn1.main.oid_registry WHERE oid = '1.2.840.113549.1.1.11'\"},{\"description\":\"Count the digest/signature algorithm OIDs the worker knows whose name mentions 'RSA'.\",\"sql\":\"SELECT count(*) AS rsa_oids FROM asn1.main.oid_registry WHERE name ILIKE '%rsa%'\"}]",
+        "vgi.keywords": "[\"oid\",\"object identifier\",\"registry\",\"oid name lookup\",\"names\",\"browse\",\"vocabulary\",\"pki\"]",
+        "vgi.title": "ASN.1 OID Name Registry"
+      },
+      false,
+      false,
+      true,
+      0,
+      2,
+      1,
+      0,
+      "CREATE TABLE oid_registry(oid VARCHAR, \"name\" VARCHAR NOT NULL, PRIMARY KEY(oid));"
+    ]
+  ]
+}

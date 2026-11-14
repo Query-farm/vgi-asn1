@@ -1,0 +1,1685 @@
+{
+  "schema_version": 1,
+  "status": "met",
+  "meets_target": true,
+  "catalogs": {
+    "released": {
+      "catalog_status": "verified",
+      "revision": "v0.4.0",
+      "catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+      "collection_reconciled": true,
+      "denominator": 28,
+      "observed_objects": 28,
+      "required": 14,
+      "verified_count": 15,
+      "candidate_count": 0,
+      "fraction": 0.5357142857142857,
+      "meets_target": true,
+      "exact_runtime_count": 15,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "at_path"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "dump"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "is_valid"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_name"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_registry"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oids"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_label"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "reencode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "tlv"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_der"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_json"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed"
+        }
+      ],
+      "uncovered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_certs"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_content"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_signers"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_ticket"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_messages"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ocsp_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs12_bags"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs8_info"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_varbinds"
+        }
+      ],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "at_path",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "at_path(ANY, VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_certs",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_certs(ANY) -> BLOB[]"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_content",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_content(ANY) -> BLOB"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_signers",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_signers(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "decode(ANY) -> VARCHAR",
+            "decode(ANY, VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "dump",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "dump(ANY) -> VARCHAR",
+            "dump(ANY, VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "is_valid",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "is_valid(ANY) -> BOOLEAN",
+            "is_valid(ANY, VARCHAR) -> BOOLEAN"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "krb_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_ticket",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "krb_ticket(ANY) -> STRUCT(tkt_vno BIGINT, realm VARCHAR, sname VARCHAR, name_type VARCHAR, enc_part_etype VARCHAR, enc_part_kvno BIGINT, enc_part_cipher BLOB)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "ldap_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_messages",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "ldap_messages(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ocsp_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "ocsp_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "oid(VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_name",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "oid_name(VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_registry",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [
+            "TABLE"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oids",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "oids(ANY) -> STRUCT(oid VARCHAR, \"name\" VARCHAR, path VARCHAR)[]"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pem_decode(VARCHAR) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_label",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pem_label(VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs12_bags",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pkcs12_bags(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs8_info",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pkcs8_info(ANY) -> STRUCT(\"version\" BIGINT, algorithm VARCHAR, params VARCHAR, public_key BLOB, \"encrypted\" BOOLEAN, kdf VARCHAR, enc_alg VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "reencode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "reencode(ANY) -> BLOB",
+            "reencode(ANY, VARCHAR) -> BLOB"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "snmp_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_varbinds",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "snmp_varbinds(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "tlv",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "tlv(ANY) -> STRUCT(path VARCHAR, \"class\" VARCHAR, tag UINTEGER, tag_name VARCHAR, constructed BOOLEAN, header_len UINTEGER, len UBIGINT, \"value\" VARCHAR)[]"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_der",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "to_der(ANY) -> BLOB"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_json",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "to_json(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "well_formed(ANY) -> STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    "current": {
+      "catalog_status": "verified",
+      "revision": "c5e0d548e72a9bdaf64798398c86af9c3b148509",
+      "catalog_sha256": "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38",
+      "collection_reconciled": false,
+      "denominator": 28,
+      "observed_objects": 28,
+      "required": 14,
+      "verified_count": 15,
+      "candidate_count": 0,
+      "fraction": 0.5357142857142857,
+      "meets_target": true,
+      "exact_runtime_count": 0,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "at_path"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "dump"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "is_valid"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_name"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_registry"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oids"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_label"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "reencode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "tlv"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_der"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_json"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed"
+        }
+      ],
+      "uncovered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_certs"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_content"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_signers"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_ticket"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_messages"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ocsp_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs12_bags"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs8_info"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_decode"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_varbinds"
+        }
+      ],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "at_path",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "at_path(ANY, VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_certs",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_certs(ANY) -> BLOB[]"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_content",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_content(ANY) -> BLOB"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "cms_signers",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "cms_signers(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "decode(ANY) -> VARCHAR",
+            "decode(ANY, VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "dump",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "dump(ANY) -> VARCHAR",
+            "dump(ANY, VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "is_valid",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "is_valid(ANY) -> BOOLEAN",
+            "is_valid(ANY, VARCHAR) -> BOOLEAN"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "krb_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "krb_ticket",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "krb_ticket(ANY) -> STRUCT(tkt_vno BIGINT, realm VARCHAR, sname VARCHAR, name_type VARCHAR, enc_part_etype VARCHAR, enc_part_kvno BIGINT, enc_part_cipher BLOB)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "ldap_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ldap_messages",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "ldap_messages(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ocsp_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "ocsp_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "oid(VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_name",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "oid_name(VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oid_registry",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [
+            "TABLE"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "oids",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "oids(ANY) -> STRUCT(oid VARCHAR, \"name\" VARCHAR, path VARCHAR)[]"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pem_decode(VARCHAR) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pem_label",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pem_label(VARCHAR) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs12_bags",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pkcs12_bags(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pkcs8_info",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pkcs8_info(ANY) -> STRUCT(\"version\" BIGINT, algorithm VARCHAR, params VARCHAR, public_key BLOB, \"encrypted\" BOOLEAN, kdf VARCHAR, enc_alg VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "reencode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "reencode(ANY) -> BLOB",
+            "reencode(ANY, VARCHAR) -> BLOB"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_decode",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "snmp_decode(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "snmp_varbinds",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "snmp_varbinds(ANY) -> None"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "tlv",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "tlv(ANY) -> STRUCT(path VARCHAR, \"class\" VARCHAR, tag UINTEGER, tag_name VARCHAR, constructed BOOLEAN, header_len UINTEGER, len UBIGINT, \"value\" VARCHAR)[]"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_der",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "to_der(ANY) -> BLOB"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "to_json",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "to_json(ANY) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "well_formed(ANY) -> STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    }
+  },
+  "interface_drift": {
+    "known": true,
+    "current_only": [],
+    "released_only": [],
+    "changed": []
+  },
+  "notebooks": {
+    "01_same_values_different_bytes.ipynb": {
+      "verified": true,
+      "issues": []
+    },
+    "02_nodes_paths_and_unknown_identifiers.ipynb": {
+      "verified": true,
+      "issues": []
+    },
+    "03_pem_labels_and_body_validation.ipynb": {
+      "verified": true,
+      "issues": []
+    }
+  },
+  "examples": [
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "well_formed"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "is_valid"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "decode"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "to_der"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "reencode"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "to_json"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "dump"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "tlv"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "at_path"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "oids"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "oid_registry"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "oid_name"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "oid"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "pem_label"
+      },
+      "notebook": "03_pem_labels_and_body_validation.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "pem_decode"
+      },
+      "notebook": "03_pem_labels_and_body_validation.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0"
+    }
+  ],
+  "issues": []
+}

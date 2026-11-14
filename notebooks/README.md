@@ -1,61 +1,38 @@
-# Executable SQL examples
+# ASN.1 bytes, fields and armor
 
-| Notebook | Question |
-| --- | --- |
-| [Same values, different bytes](01_same_values_different_bytes.ipynb) | Which ASN.1 encoding differences disappear after structural normalization, and which remain? |
+Three executed notebooks use the native [v0.4.0 release](https://github.com/Query-farm/vgi-asn1/releases/tag/v0.4.0):
 
-The saved example uses seven explicitly synthetic packets and the real
-`vgi-asn1` v0.4.0 worker through Haybarn and VGI. It compares validation errors,
-raw and normalized byte lengths, and distinct encodings per decoded-value group.
-The padded INTEGER illustrates a limit: this release preserves primitive payload
-bytes, and its DER parser check is not exhaustive DER conformance validation.
-The example does not verify cryptographic signatures.
+1. [Same values, different bytes](01_same_values_different_bytes.ipynb) compares framing normalization, decoded-value groups and the limits of the release's structural DER checks.
+2. [Nodes, paths and unknown identifiers](02_nodes_paths_and_unknown_identifiers.ipynb) compares typed JSON, a text trace and path lookups, then preserves unknown OIDs while joining the bundled name registry.
+3. [PEM labels and body validation](03_pem_labels_and_body_validation.ipynb) separates an armor label, successful base64 decoding and ASN.1 body parsing. Relabeling a block changes none of its body bytes.
 
-## Run from this directory
+Every notebook has an **Open in Colab** button. In a fresh runtime, run all cells. The short bootstrap installs only the shared base package and downloads the checksum-verified chart companion; it preserves compatible preloaded plotting and kernel packages. No source checkout, Rust compiler, API key or external dataset is required. The worker connection remains visible:
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then copy or
-download the entire `notebooks/` directory. No worker source checkout, Rust
-compiler, root environment, API key or external dataset is required.
+```sql
+ATTACH 'asn1' (TYPE vgi,
+  LOCATION 'github-auto://Query-farm/vgi-asn1@v0.4.0');
+```
+
+GitHub displays saved SQL, results and SVG charts. It does not fold executable inputs using Jupyter metadata, so shared setup remains brief. Editor folding is an optional aid. Presentation, branding and execution are maintained in [vgi-example-notebooks](https://github.com/Query-farm/vgi-example-notebooks), rather than copied into this repo.
+
+## Local execution and experiments
 
 ```sh
 cd notebooks
-uv sync --frozen
-uv run --frozen python execute.py
+uv sync --locked
+uv run --locked vgi-notebooks --timeout 300
+uv run --locked vgi-notebooks 01_same_values_different_bytes.ipynb \
+  --parameters '{"TRIM_BYTES":1}' --output-dir artifacts/trim
+uv run --locked vgi-notebooks 02_nodes_paths_and_unknown_identifiers.ipynb \
+  --parameters '{"INCLUDE_UNKNOWN":false}' --output-dir artifacts/known
+uv run --locked vgi-notebooks 03_pem_labels_and_body_validation.ipynb \
+  --parameters '{"FIRST_LABEL":"PUBLIC KEY"}' --output-dir artifacts/relabel
 ```
 
-The locked environment uses published Haybarn 2.0.0rc11. The visible SQL installs
-the community VGI extension and attaches the literal
-`github-auto://Query-farm/vgi-asn1@v0.4.0`. Internet access is required to install
-dependencies and download the extension and matching platform release asset.
-The release includes binaries for Linux, macOS and Windows; the saved executions
-were verified on macOS arm64. To upgrade the worker, edit the visible release tag
-and rerun both the default and experiment before replacing saved outputs.
+The local environment includes the optional runner; the notebook bootstrap installs the base package. Initial package/extension/binary downloads require internet. All parsing then operates on the authored SQL literals. Experiment copies preserve the default saved notebooks.
 
-For an interactive notebook editor, select `notebooks/.venv/bin/python`. To
-register that environment explicitly:
+## Interpretation and coverage
 
-```sh
-uv run --frozen python -m ipykernel install --user --name vgi-asn1-notebooks --display-name "Python (vgi-asn1 notebooks)"
-```
+These packets and armor blocks are explicitly synthetic. None contains a real key, certificate or captured message. The worker performs structural parsing and does not verify cryptographic signatures, authenticate data or establish full certificate/key schema validity. Its normalizer preserves primitive payloads, and its DER parser check does not exhaustively enforce DER primitive encoding rules. Those limits are demonstrated in the returned results.
 
-The runner creates a temporary kernel specification and does not require a
-globally registered kernel. It starts from the notebook directory, writes a
-default notebook only after all cells succeed, and requires a separate output
-directory for overrides.
-
-## Truncation experiment
-
-```sh
-uv run --frozen python execute.py --parameters '{"TRIM_BYTES": 1}' --output-dir validation/trim-1
-```
-
-This removes one byte from the indefinite-length packet. Compare its error,
-available normalization result, and decoded-value group counts. Reset
-`TRIM_BYTES = 0` for the default. Experiment copies include the local assets,
-helpers, runner and locked environment files. A reader can run the copied folder
-independently. Generated charts and execution artifacts are ignored; the primary
-notebook retains its successful embedded outputs.
-
-The SQL cells contain the full input fixture and all domain transformations.
-Python only handles configuration, presentation, assertions and charts. See
-[STANDARD.md](STANDARD.md) for the example presentation conventions.
+The complete released catalog has **28 logical public functions/tables**, including producer table functions and the OID registry. [Coverage evidence](coverage.json) maps the interpreted examples to 15 of them (target14). Named protocol/security decoders and their fan-outs remain explicit uncovered functions. Current-main source differences are example/documentation metadata; coverage mappings record that compatibility review separately from the actual released notebook runtime. Raw exports, current registration, execution receipts and the reviewed source diff are under [coverage](coverage/).

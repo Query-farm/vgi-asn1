@@ -1,0 +1,1159 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='asn1' ORDER BY schema_name,function_name",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "asn1",
+      "22592",
+      "main",
+      "at_path",
+      null,
+      "scalar",
+      "Return the JSON value of the node at a JSONPath-ish `path` (e.g. '$.0.2') within a blob, or JSON null if the path does not resolve.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Return the decoded JSON value of the node located at `path` within a BER/CER/DER blob. `path` is the JSONPath-ish locator produced by `tlv()` (e.g. `$` for the root, `$.0.2` for the third child of the first child). Returns JSON `null` when the path does not resolve or the blob is malformed.",
+        "vgi.doc_md": "Get the value at a node path, e.g. `at_path(payload, '$.0.2')`.",
+        "vgi.example_queries": "[{\"description\":\"Pull the node at path '$.0' (the first child \u2014 the INTEGER) of a DER `SEQUENCE { INTEGER 5 }`.\",\"sql\":\"SELECT asn1.main.at_path(from_hex('3003020105'), '$.0') AS node;\"}]",
+        "vgi.keywords": "[\"asn1\",\"at_path\",\"path\",\"jsonpath\",\"node\",\"navigate\",\"extract\",\"ber\",\"der\"]",
+        "vgi.title": "ASN.1 Value at Path"
+      },
+      "VARCHAR",
+      [
+        "blob",
+        "path"
+      ],
+      [
+        "ANY",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22596,
+      [
+        "SELECT asn1.main.at_path(from_hex('3003020105'), '$.0') AS node;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "cms_certs",
+      null,
+      "scalar",
+      "Return the embedded DER certificates of a CMS SignedData as a LIST(BLOB) \u2014 the join key to vgi-x509 (hash each with sha256).",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Return the list of embedded DER certificates carried in a CMS / PKCS#7 SignedData (RFC 5652) as a `LIST(BLOB)`. Each element is a complete X.509 certificate you can hash (sha256) and join to a vgi-x509 fingerprint, or re-feed to asn1.decode. Empty list for a non-SignedData blob.",
+        "vgi.doc_md": "Get the embedded CMS certificates as a `LIST(BLOB)`, e.g. `cms_certs(data)`.",
+        "vgi.example_queries": "[{\"description\":\"Extract the embedded certificate LIST<BLOB> from a CMS blob (an empty list for this minimal id-data ContentInfo, which carries no certs).\",\"sql\":\"SELECT asn1.main.cms_certs(from_hex('301106092a864886f70d010701a00404026869')) AS certs;\"}]",
+        "vgi.keywords": "[\"cms\",\"pkcs7\",\"cms_certs\",\"embedded certificates\",\"x509\",\"signedData\",\"rfc 5652\",\"chain\"]",
+        "vgi.title": "CMS Embedded Certificates"
+      },
+      "BLOB[]",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22597,
+      [
+        "SELECT asn1.main.cms_certs(from_hex('301106092a864886f70d010701a00404026869')) AS certs;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "cms_content",
+      null,
+      "scalar",
+      "Return the encapsulated eContent (BLOB) of a CMS SignedData \u2014 often a nested CMS/DER, re-feed to decode(). NULL when absent.",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Return the encapsulated content (`eContent`) bytes of a CMS / PKCS#7 SignedData (RFC 5652) as a `BLOB`. This is the signed payload \u2014 often itself a nested CMS or DER structure you can re-feed to asn1.decode. NULL when no eContent is present (detached signature) or the blob is not a SignedData.",
+        "vgi.doc_md": "Get the CMS signed payload bytes, e.g. `cms_content(data)`.",
+        "vgi.example_queries": "[{\"description\":\"Extract the encapsulated eContent BLOB from a CMS SignedData (NULL for this minimal id-data ContentInfo, which wraps no SignedData).\",\"sql\":\"SELECT asn1.main.cms_content(from_hex('301106092a864886f70d010701a00404026869')) AS econtent;\"}]",
+        "vgi.keywords": "[\"cms\",\"pkcs7\",\"cms_content\",\"eContent\",\"signed payload\",\"detached\",\"rfc 5652\"]",
+        "vgi.title": "CMS Encapsulated Content"
+      },
+      "BLOB",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22598,
+      [
+        "SELECT asn1.main.cms_content(from_hex('301106092a864886f70d010701a00404026869')) AS econtent;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "cms_decode",
+      null,
+      "scalar",
+      "Decode a CMS / PKCS#7 ContentInfo to JSON (named content_type + dispatched content).",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Decode a CMS / PKCS#7 ContentInfo (RFC 5652) into a JSON projection: the named content_type (signedData, envelopedData, TSTInfo, \u2026) and the dispatched content tree. Use cms_signers() / cms_certs() / cms_content() to shred a SignedData. Signatures are surfaced, never verified.",
+        "vgi.doc_md": "Decode a CMS/PKCS#7 blob to JSON, e.g. `cms_decode(data)`.",
+        "vgi.example_queries": "[{\"description\":\"Decode a minimal CMS ContentInfo (content_type 'id-data') into JSON.\",\"sql\":\"SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info;\"}]",
+        "vgi.keywords": "[\"cms\",\"pkcs7\",\"cms_decode\",\"signedData\",\"envelopedData\",\"content type\",\"rfc 5652\",\"s/mime\",\"timestamp\"]",
+        "vgi.title": "Decode CMS / PKCS#7"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "cms_signers",
+      null,
+      "table",
+      "Shred a CMS SignedData into one row per SignerInfo",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Shred a CMS / PKCS#7 SignedData (RFC 5652) into one row per SignerInfo: the signer's identity (IssuerAndSerial or SubjectKeyIdentifier), the named digest/signature algorithm OIDs, the well-known signed attributes (contentType, messageDigest, signingTime) and the rest as JSON, the signature bytes, and signer_cert_sha256 \u2014 the SHA-256 of the matching embedded certificate, a direct join key to a vgi-x509 fingerprint. The signature is surfaced, never verified. The blob argument is a literal/scalar; for bulk per-row use the scalar cms_decode().",
+        "vgi.doc_md": "Shred CMS SignerInfos into rows (the vgi-x509 join surface). Key columns: `digest_alg`, `sig_alg`, `signing_time`, `signer_cert_sha256`, `signature`.",
+        "vgi.example_queries": "[{\"description\":\"Shred a CMS SignedData into one row per SignerInfo and project the signer identity kind and the named digest/signature algorithms.\",\"sql\":\"SELECT signer_sid, digest_alg, sig_alg FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc')) ORDER BY signer_sid;\"}]",
+        "vgi.keywords": "[\"cms\",\"pkcs7\",\"cms_signers\",\"signer\",\"signed attributes\",\"signing time\",\"x509\",\"sha256\",\"rfc 5652\",\"code signing\",\"s/mime\"]",
+        "vgi.result_columns_schema": "[{\"description\":\"SignerInfo version (CMSVersion).\",\"name\":\"version\",\"type\":\"INTEGER\"},{\"description\":\"Signer identifier kind.\",\"name\":\"signer_sid\",\"type\":\"VARCHAR\"},{\"description\":\"Signer cert issuer (CN=\u2026,O=\u2026).\",\"name\":\"signer_issuer\",\"type\":\"VARCHAR\"},{\"description\":\"Signer cert serial (decimal).\",\"name\":\"signer_serial\",\"type\":\"VARCHAR\"},{\"description\":\"Subject key identifier (hex), if SKID-based.\",\"name\":\"signer_skid\",\"type\":\"VARCHAR\"},{\"description\":\"Named digest algorithm OID.\",\"name\":\"digest_alg\",\"type\":\"VARCHAR\"},{\"description\":\"Named signature algorithm OID.\",\"name\":\"sig_alg\",\"type\":\"VARCHAR\"},{\"description\":\"signingTime signed attribute (UTC).\",\"name\":\"signing_time\",\"type\":\"TIMESTAMP\"},{\"description\":\"contentType (eContentType / signed attr).\",\"name\":\"content_type\",\"type\":\"VARCHAR\"},{\"description\":\"messageDigest signed attribute bytes.\",\"name\":\"message_digest\",\"type\":\"BLOB\"},{\"description\":\"The signature bytes (surfaced, not verified).\",\"name\":\"signature\",\"type\":\"BLOB\"},{\"description\":\"SHA-256 (hex) of the matching embedded cert \u2014 join to vgi-x509.\",\"name\":\"signer_cert_sha256\",\"type\":\"VARCHAR\"},{\"description\":\"Remaining signed attributes as JSON.\",\"name\":\"signed_attrs\",\"type\":\"VARCHAR\"}]",
+        "vgi.title": "CMS Signers"
+      },
+      null,
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22618,
+      [
+        "SELECT signer_sid, digest_alg, sig_alg FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc')) ORDER BY signer_sid;"
+      ],
+      null,
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "decode",
+      null,
+      "scalar",
+      "Decode a BER/CER/DER blob to its nested typed JSON projection (the 'auto' mode). NULL \u2192 NULL; a malformed blob yields {error,kind}. Call the two-argument overload to choose a different mode.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Decode any BER / CER / DER blob into JSON. The optional second argument `mode` is one of 'auto' (default), 'struct', 'json' \u2014 all returning the clean nested typed projection (SEQUENCE\u2192array, primitives\u2192their scalar value, OID\u2192dotted string, time\u2192ISO-8601, OCTET/BIT STRING\u2192base64url) \u2014 or 'tlv', which returns the flat list of TLV nodes (path, class, tag, length, value). A stable JSON column type, so it never aborts a scan: NULL input yields NULL and a malformed blob yields a JSON object {error, kind} rather than an error.",
+        "vgi.doc_md": "Decode an ASN.1 blob to JSON, e.g. `decode(payload)` or `decode(payload,'tlv')`.",
+        "vgi.example_queries": "[{\"description\":\"Decode a DER `SEQUENCE { INTEGER 5 }` to a nested JSON tree (yields the JSON array `[5]`).\",\"sql\":\"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded;\"},{\"description\":\"Decode a DER `SEQUENCE { INTEGER 5 }` with mode 'tlv' to its flat list of TLV nodes (path, class, tag, length, value).\",\"sql\":\"SELECT asn1.main.decode(from_hex('3003020105'), 'tlv') AS nodes;\"}]",
+        "vgi.keywords": "[\"asn1\",\"decode\",\"ber\",\"der\",\"cer\",\"tlv\",\"parse\",\"to json\",\"struct\",\"blob\",\"binary\"]",
+        "vgi.title": "Decode ASN.1"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22600,
+      [
+        "SELECT asn1.main.decode(from_hex('3003020105')) AS decoded;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "decode",
+      null,
+      "scalar",
+      "Decode a BER/CER/DER blob to JSON with an explicit output `mode` \u2208 {auto, struct, json, tlv}: auto/struct/json return the nested typed JSON projection; tlv returns the flat TLV-node list. NULL \u2192 NULL; a malformed blob yields {error,kind}.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Decode any BER / CER / DER blob into JSON. The optional second argument `mode` is one of 'auto' (default), 'struct', 'json' \u2014 all returning the clean nested typed projection (SEQUENCE\u2192array, primitives\u2192their scalar value, OID\u2192dotted string, time\u2192ISO-8601, OCTET/BIT STRING\u2192base64url) \u2014 or 'tlv', which returns the flat list of TLV nodes (path, class, tag, length, value). A stable JSON column type, so it never aborts a scan: NULL input yields NULL and a malformed blob yields a JSON object {error, kind} rather than an error.",
+        "vgi.doc_md": "Decode an ASN.1 blob to JSON, e.g. `decode(payload)` or `decode(payload,'tlv')`.",
+        "vgi.example_queries": "[{\"description\":\"Decode a DER `SEQUENCE { INTEGER 5 }` to a nested JSON tree (yields the JSON array `[5]`).\",\"sql\":\"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded;\"},{\"description\":\"Decode a DER `SEQUENCE { INTEGER 5 }` with mode 'tlv' to its flat list of TLV nodes (path, class, tag, length, value).\",\"sql\":\"SELECT asn1.main.decode(from_hex('3003020105'), 'tlv') AS nodes;\"}]",
+        "vgi.keywords": "[\"asn1\",\"decode\",\"ber\",\"der\",\"cer\",\"tlv\",\"parse\",\"to json\",\"struct\",\"blob\",\"binary\"]",
+        "vgi.title": "Decode ASN.1"
+      },
+      "VARCHAR",
+      [
+        "blob",
+        "mode"
+      ],
+      [
+        "ANY",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22600,
+      [
+        "SELECT asn1.main.decode(from_hex('3003020105'), 'tlv') AS nodes;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "dump",
+      null,
+      "scalar",
+      "Render an indented human-debug TLV dump of a blob in the default openssl `asn1parse` style (offset, depth, header/length, tag name, primitive value). A malformed blob renders a parse-error line, never an error. Pass a second argument to choose the 'dumpasn1' style.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Render a BER/CER/DER blob as an indented human-debug TLV dump \u2014 the primary triage surface, preserving tags, lengths, raw bytes, and indefinite-length markers. The optional second argument `format` is 'openssl' (default; mirrors `openssl asn1parse`: offset, depth, header/length, tag name, primitive value) or 'dumpasn1' (Gutmann's annotated indentation, with OID names from the bundled registry). A malformed blob renders a short parse-error line instead of erroring.",
+        "vgi.doc_md": "Produce an indented TLV dump of a blob, e.g. `dump(payload)` or `dump(payload,'dumpasn1')`.",
+        "vgi.example_queries": "[{\"description\":\"Produce an openssl-asn1parse-style dump of a DER `SEQUENCE { INTEGER 5 }`.\",\"sql\":\"SELECT asn1.main.dump(from_hex('3003020105')) AS text;\"},{\"description\":\"Dump a DER `SEQUENCE { INTEGER 5 }` in dumpasn1 (Gutmann annotated) style.\",\"sql\":\"SELECT asn1.main.dump(from_hex('3003020105'), 'dumpasn1') AS text;\"}]",
+        "vgi.keywords": "[\"asn1\",\"dump\",\"asn1parse\",\"openssl\",\"dumpasn1\",\"tlv\",\"triage\",\"debug\",\"hex\"]",
+        "vgi.title": "ASN.1 Dump"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22601,
+      [
+        "SELECT asn1.main.dump(from_hex('3003020105')) AS text;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "dump",
+      null,
+      "scalar",
+      "Render an indented human-debug TLV dump of a blob in an explicit `format` \u2208 {openssl, dumpasn1}: openssl mirrors `openssl asn1parse`; dumpasn1 mirrors Gutmann's annotated style with OID names. A malformed blob renders a parse-error line, never an error.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Render a BER/CER/DER blob as an indented human-debug TLV dump \u2014 the primary triage surface, preserving tags, lengths, raw bytes, and indefinite-length markers. The optional second argument `format` is 'openssl' (default; mirrors `openssl asn1parse`: offset, depth, header/length, tag name, primitive value) or 'dumpasn1' (Gutmann's annotated indentation, with OID names from the bundled registry). A malformed blob renders a short parse-error line instead of erroring.",
+        "vgi.doc_md": "Produce an indented TLV dump of a blob, e.g. `dump(payload)` or `dump(payload,'dumpasn1')`.",
+        "vgi.example_queries": "[{\"description\":\"Produce an openssl-asn1parse-style dump of a DER `SEQUENCE { INTEGER 5 }`.\",\"sql\":\"SELECT asn1.main.dump(from_hex('3003020105')) AS text;\"},{\"description\":\"Dump a DER `SEQUENCE { INTEGER 5 }` in dumpasn1 (Gutmann annotated) style.\",\"sql\":\"SELECT asn1.main.dump(from_hex('3003020105'), 'dumpasn1') AS text;\"}]",
+        "vgi.keywords": "[\"asn1\",\"dump\",\"asn1parse\",\"openssl\",\"dumpasn1\",\"tlv\",\"triage\",\"debug\",\"hex\"]",
+        "vgi.title": "ASN.1 Dump"
+      },
+      "VARCHAR",
+      [
+        "blob",
+        "format"
+      ],
+      [
+        "ANY",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22601,
+      [
+        "SELECT asn1.main.dump(from_hex('3003020105'), 'dumpasn1') AS text;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "is_valid",
+      null,
+      "scalar",
+      "Whether a blob is well-formed under the default DER encoding rules (canonical: minimal lengths, no indefinite length). NULL \u2192 NULL; a malformed blob returns FALSE, never an error. Pass a second argument to validate as 'ber' or 'cer' instead.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Return whether a blob is well-formed under the named encoding rules. The optional second argument `rules` is 'der' (default), 'cer', or 'ber'; 'der'/'cer' additionally enforce canonical constraints (minimal length encoding, no indefinite length). Cheap and total \u2014 a malformed blob returns FALSE, never an error; NULL input returns NULL.",
+        "vgi.doc_md": "Check a blob's well-formedness under encoding rules, e.g. `is_valid(data,'der')`.",
+        "vgi.example_queries": "[{\"description\":\"Check that a DER `SEQUENCE { INTEGER 5 }` is well-formed (returns true).\",\"sql\":\"SELECT asn1.main.is_valid(from_hex('3003020105')) AS valid;\"},{\"description\":\"Check that a DER `SEQUENCE { INTEGER 5 }` is valid under the strict DER rules (returns true).\",\"sql\":\"SELECT asn1.main.is_valid(from_hex('3003020105'), 'der') AS valid;\"}]",
+        "vgi.keywords": "[\"asn1\",\"is_valid\",\"validate\",\"der\",\"ber\",\"cer\",\"canonical\",\"well-formed\"]",
+        "vgi.title": "ASN.1 Valid?"
+      },
+      "BOOLEAN",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22602,
+      [
+        "SELECT asn1.main.is_valid(from_hex('3003020105')) AS valid;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "is_valid",
+      null,
+      "scalar",
+      "Whether a blob is well-formed under an explicit `rules` \u2208 {ber, cer, der}; der/cer also enforce canonical constraints (minimal lengths, no indefinite length). NULL \u2192 NULL; a malformed blob returns FALSE, never an error.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Return whether a blob is well-formed under the named encoding rules. The optional second argument `rules` is 'der' (default), 'cer', or 'ber'; 'der'/'cer' additionally enforce canonical constraints (minimal length encoding, no indefinite length). Cheap and total \u2014 a malformed blob returns FALSE, never an error; NULL input returns NULL.",
+        "vgi.doc_md": "Check a blob's well-formedness under encoding rules, e.g. `is_valid(data,'der')`.",
+        "vgi.example_queries": "[{\"description\":\"Check that a DER `SEQUENCE { INTEGER 5 }` is well-formed (returns true).\",\"sql\":\"SELECT asn1.main.is_valid(from_hex('3003020105')) AS valid;\"},{\"description\":\"Check that a DER `SEQUENCE { INTEGER 5 }` is valid under the strict DER rules (returns true).\",\"sql\":\"SELECT asn1.main.is_valid(from_hex('3003020105'), 'der') AS valid;\"}]",
+        "vgi.keywords": "[\"asn1\",\"is_valid\",\"validate\",\"der\",\"ber\",\"cer\",\"canonical\",\"well-formed\"]",
+        "vgi.title": "ASN.1 Valid?"
+      },
+      "BOOLEAN",
+      [
+        "blob",
+        "rules"
+      ],
+      [
+        "ANY",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22602,
+      [
+        "SELECT asn1.main.is_valid(from_hex('3003020105'), 'der') AS valid;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "krb_decode",
+      null,
+      "scalar",
+      "Decode a Kerberos V5 message to JSON, dispatched on its [APPLICATION n] message tag.",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Decode a Kerberos V5 message (RFC 4120) by dispatching on its [APPLICATION n] tag (Ticket, AS-REQ/REP, TGS-REQ/REP, AP-REQ/REP, KRB-ERROR, \u2026) into a JSON projection. Encrypted parts are left as opaque bytes \u2014 nothing is decrypted.",
+        "vgi.doc_md": "Decode a Kerberos message to JSON, e.g. `krb_decode(blob)`.",
+        "vgi.example_queries": "[{\"description\":\"Decode an [APPLICATION 1] Kerberos Ticket (tkt-vno 5) into JSON (msg_type 'Ticket').\",\"sql\":\"SELECT asn1.main.krb_decode(from_hex('61073005a003020105')) AS msg;\"}]",
+        "vgi.keywords": "[\"kerberos\",\"krb5\",\"krb_decode\",\"ticket\",\"AS-REQ\",\"TGS-REP\",\"KRB-ERROR\",\"rfc 4120\"]",
+        "vgi.title": "Decode Kerberos Message"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22603,
+      [
+        "SELECT asn1.main.krb_decode(from_hex('61073005a003020105')) AS msg;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "krb_ticket",
+      null,
+      "scalar",
+      "Parse the outer Kerberos Ticket (RFC 4120) into a STRUCT(tkt_vno, realm, sname, name_type, enc_part_etype, enc_part_kvno, enc_part_cipher). The EncTicketPart stays encrypted (etype named, cipher as BLOB).",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Parse the outer Kerberos `Ticket` ([APPLICATION 1], RFC 4120) into a typed `STRUCT`: ticket version, realm, service principal name + name-type, and the EncryptedData envelope (named etype, kvno, and the still-encrypted cipher as a `BLOB` \u2014 nothing is decrypted). NULL for a non-Ticket blob.",
+        "vgi.doc_md": "Project the outer Kerberos Ticket into a `STRUCT`, e.g. `krb_ticket(blob)`.",
+        "vgi.example_queries": "[{\"description\":\"Project the outer [APPLICATION 1] Ticket envelope to a STRUCT (here tkt_vno = 5; realm/sname/enc-part NULL on this minimal ticket).\",\"sql\":\"SELECT asn1.main.krb_ticket(from_hex('61073005a003020105')) AS ticket;\"}]",
+        "vgi.keywords": "[\"kerberos\",\"ticket\",\"krb_ticket\",\"sname\",\"etype\",\"enc-part\",\"rfc 4120\"]",
+        "vgi.title": "Kerberos Ticket"
+      },
+      "STRUCT(tkt_vno BIGINT, realm VARCHAR, sname VARCHAR, name_type VARCHAR, enc_part_etype VARCHAR, enc_part_kvno BIGINT, enc_part_cipher BLOB)",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22604,
+      [
+        "SELECT asn1.main.krb_ticket(from_hex('61073005a003020105')) AS ticket;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "ldap_decode",
+      null,
+      "scalar",
+      "Decode the first LDAPMessage of a blob to JSON (message_id, protocolOp, dn/filter/\u2026).",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Decode the first LDAPMessage of a blob (RFC 4511) into a JSON projection: message_id, the protocolOp name, plus dn / scope / RFC 4515 filter / attributes / result fields as applicable. Use ldap_messages() to fan a multi-message segment into rows.",
+        "vgi.doc_md": "Decode an LDAP message to JSON, e.g. `ldap_decode(blob)`.",
+        "vgi.example_queries": "[{\"description\":\"Decode a real LDAP searchRequest into JSON (RFC 4515 filter '(uid=jdoe)').\",\"sql\":\"SELECT asn1.main.ldap_decode(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')) AS msg;\"}]",
+        "vgi.keywords": "[\"ldap\",\"ldap_decode\",\"bind\",\"search\",\"filter\",\"rfc 4511\",\"rfc 4515\",\"directory\"]",
+        "vgi.title": "Decode LDAP Message"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22605,
+      [
+        "SELECT asn1.main.ldap_decode(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')) AS msg;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "ldap_messages",
+      null,
+      "table",
+      "Fan a blob's LDAP messages into one row each",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Fan a blob (one segment may carry several LDAPMessages, RFC 4511) into one row per message: message_id, the protocolOp op name, plus dn / scope / RFC 4515 filter / attributes / result fields as applicable. The blob argument is a literal/scalar; for bulk per-row shredding of a column use the scalar ldap_decode().",
+        "vgi.doc_md": "Shred LDAP messages into rows. Columns: `message_id`, `op`, `dn`, `scope`, `filter`, `attributes`, `result_code`, `matched_dn`, `diagnostic`.",
+        "vgi.example_queries": "[{\"description\":\"Shred an LDAP SearchRequest into rows and project the operation, base DN, and RFC 4515 filter.\",\"sql\":\"SELECT op, dn, filter FROM asn1.main.ldap_messages(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')) ORDER BY message_id;\"}]",
+        "vgi.keywords": "[\"ldap\",\"ldap_messages\",\"bind\",\"search\",\"filter\",\"rfc 4511\",\"rfc 4515\",\"shred\"]",
+        "vgi.result_columns_schema": "[{\"description\":\"The LDAP messageID.\",\"name\":\"message_id\",\"type\":\"INTEGER\"},{\"description\":\"The protocolOp name, e.g. SearchRequest.\",\"name\":\"op\",\"type\":\"VARCHAR\"},{\"description\":\"The base/object DN (op-dependent).\",\"name\":\"dn\",\"type\":\"VARCHAR\"},{\"description\":\"Search scope (SearchRequest).\",\"name\":\"scope\",\"type\":\"VARCHAR\"},{\"description\":\"RFC 4515 filter string (SearchRequest).\",\"name\":\"filter\",\"type\":\"VARCHAR\"},{\"description\":\"Requested/returned attribute names.\",\"name\":\"attributes\",\"type\":\"VARCHAR[]\"},{\"description\":\"Named LDAPResult code (result ops).\",\"name\":\"result_code\",\"type\":\"VARCHAR\"},{\"description\":\"The matchedDN (result ops).\",\"name\":\"matched_dn\",\"type\":\"VARCHAR\"},{\"description\":\"The diagnosticMessage (result ops).\",\"name\":\"diagnostic\",\"type\":\"VARCHAR\"}]",
+        "vgi.title": "LDAP Messages"
+      },
+      null,
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22619,
+      [
+        "SELECT op, dn, filter FROM asn1.main.ldap_messages(from_hex('3033020102632e040a64633d6578616d706c650a01020a0100020100020100010100a30b040375696404046a646f6530040402636e')) ORDER BY message_id;"
+      ],
+      null,
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "ocsp_decode",
+      null,
+      "scalar",
+      "Decode an OCSP request or response to JSON (status, responder, per-cert responses).",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Decode an OCSP request or response (RFC 6960) into a JSON projection: response_status, producedAt, responder_id, and a responses list (per-cert serial, issuer hashes, cert_status good/revoked/unknown, revocation time/reason, this/next update). Signature surfaced, not verified.",
+        "vgi.doc_md": "Decode an OCSP message to JSON, e.g. `ocsp_decode(blob)`.",
+        "vgi.example_queries": "[{\"description\":\"Decode a minimal OCSPResponse into JSON (response_status 'successful').\",\"sql\":\"SELECT asn1.main.ocsp_decode(from_hex('30030a0100')) AS msg;\"}]",
+        "vgi.keywords": "[\"ocsp\",\"ocsp_decode\",\"revocation\",\"cert status\",\"responder\",\"rfc 6960\",\"pki\"]",
+        "vgi.title": "Decode OCSP Message"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22606,
+      [
+        "SELECT asn1.main.ocsp_decode(from_hex('30030a0100')) AS msg;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "oid",
+      null,
+      "scalar",
+      "Resolve a friendly OID name to its dotted form from the bundled registry, or NULL if unknown.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Resolve a friendly OID name (e.g. 'sha256WithRSAEncryption', case-insensitive) to its dotted OBJECT IDENTIFIER (e.g. '1.2.840.113549.1.1.11') from the bundled registry. Returns NULL for a name not in the registry. The inverse of oid_name().",
+        "vgi.doc_md": "Resolve a name to a dotted OID, e.g. `oid('id-at-commonName')` \u2192 '2.5.4.3'.",
+        "vgi.example_queries": "[{\"description\":\"Resolve a name to '2.5.4.3'.\",\"sql\":\"SELECT asn1.main.oid('id-at-commonName');\"}]",
+        "vgi.keywords": "[\"oid\",\"name to oid\",\"object identifier\",\"dotted\",\"resolve\",\"registry\",\"lookup\"]",
+        "vgi.title": "Name \u2192 OID"
+      },
+      "VARCHAR",
+      [
+        "name"
+      ],
+      [
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22607,
+      [
+        "SELECT asn1.main.oid('id-at-commonName');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "oid_name",
+      null,
+      "scalar",
+      "Resolve a dotted OID to its friendly name from the bundled registry, or NULL if unknown.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Resolve a dotted OBJECT IDENTIFIER (e.g. '1.2.840.113549.1.1.11') to its friendly name (e.g. 'sha256WithRSAEncryption') from the bundled registry of signature/digest algorithms, X.500 attribute types, content types, EKUs, curves, and SNMP/MIB anchors. Returns NULL for an OID not in the registry. The inverse of oid().",
+        "vgi.doc_md": "Resolve a dotted OID to a name, e.g. `oid_name('2.5.4.3')` \u2192 'id-at-commonName'.",
+        "vgi.example_queries": "[{\"description\":\"Resolve an OID to 'sha256WithRSAEncryption'.\",\"sql\":\"SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');\"}]",
+        "vgi.keywords": "[\"oid\",\"oid_name\",\"object identifier\",\"name\",\"resolve\",\"registry\",\"algorithm\"]",
+        "vgi.title": "Resolve OID to Friendly Name"
+      },
+      "VARCHAR",
+      [
+        "oid"
+      ],
+      [
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22608,
+      [
+        "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "oids",
+      null,
+      "scalar",
+      "Return every OBJECT IDENTIFIER in a blob as a LIST of STRUCT(oid, name, path) \u2014 the OID inventory / join surface.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Return every OBJECT IDENTIFIER in a BER/CER/DER blob as a `LIST` of `STRUCT(oid, name, path)`: the dotted OID, its friendly name resolved from the bundled registry (NULL if unknown), and its node path. The inventory / join surface \u2014 e.g. find every blob using a deprecated `sha1WithRSAEncryption` signature. Empty list for a malformed blob.",
+        "vgi.doc_md": "Inventory the OIDs in a blob, e.g. `oids(data)`.",
+        "vgi.example_queries": "[{\"description\":\"Inventory every OID in an AlgorithmIdentifier blob \u2014 here 1.2.840.113549.1.1.11 (sha256WithRSAEncryption), with its resolved name and node path.\",\"sql\":\"SELECT asn1.main.oids(from_hex('300d06092a864886f70d01010b0500')) AS oids;\"}]",
+        "vgi.keywords": "[\"asn1\",\"oids\",\"object identifier\",\"inventory\",\"algorithm\",\"signature\",\"audit\",\"join\"]",
+        "vgi.title": "ASN.1 OID Inventory"
+      },
+      "STRUCT(oid VARCHAR, \"name\" VARCHAR, path VARCHAR)[]",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22609,
+      [
+        "SELECT asn1.main.oids(from_hex('300d06092a864886f70d01010b0500')) AS oids;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "pem_decode",
+      null,
+      "table",
+      "Split a PEM bundle into its DER blocks (idx, label, der)",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Split a PEM bundle (text) into its `-----BEGIN <label>-----` blocks, base64-decoding each body to DER \u2014 one row per block: idx, label, der. The bridge from text armor to the DER scalars (decode/cms_decode/\u2026). Blocks with an unparseable body are skipped.",
+        "vgi.doc_md": "Split a PEM bundle into DER blocks. Columns: `idx`, `label`, `der`.",
+        "vgi.example_queries": "[{\"description\":\"Split a one-block PEM bundle and list each block's index, label, and decoded DER length.\",\"sql\":\"SELECT idx, label, octet_length(der) AS der_bytes FROM asn1.main.pem_decode('-----BEGIN CERTIFICATE-----' || chr(10) || 'AQID' || chr(10) || '-----END CERTIFICATE-----') ORDER BY idx;\"}]",
+        "vgi.keywords": "[\"pem\",\"pem_decode\",\"armor\",\"certificate\",\"private key\",\"base64\",\"der\",\"bundle\",\"split\"]",
+        "vgi.result_columns_schema": "[{\"description\":\"Zero-based index of the PEM block within the bundle.\",\"name\":\"idx\",\"type\":\"INTEGER\"},{\"description\":\"The block label, e.g. 'CERTIFICATE' or 'PRIVATE KEY'.\",\"name\":\"label\",\"type\":\"VARCHAR\"},{\"description\":\"The base64-decoded DER bytes of the block (feed to asn1.decode).\",\"name\":\"der\",\"type\":\"BLOB\"}]",
+        "vgi.title": "Decode PEM Bundle"
+      },
+      null,
+      [
+        "text"
+      ],
+      [
+        "VARCHAR"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22620,
+      [
+        "SELECT idx, label, octet_length(der) AS der_bytes FROM asn1.main.pem_decode('-----BEGIN CERTIFICATE-----' || chr(10) || 'AQID' || chr(10) || '-----END CERTIFICATE-----') ORDER BY idx;"
+      ],
+      null,
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "pem_label",
+      null,
+      "scalar",
+      "Return the label of the first PEM block in a text (e.g. 'CERTIFICATE'), or NULL if there is no PEM block.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Return the label of the first `-----BEGIN <label>-----` block in a PEM text (e.g. 'CERTIFICATE', 'PRIVATE KEY'), or NULL when the text contains no PEM block. Use pem_decode() to split a bundle into its DER blocks.",
+        "vgi.doc_md": "Get the first PEM block's label, e.g. `pem_label(armor)` \u2192 'CERTIFICATE'.",
+        "vgi.example_queries": "[{\"description\":\"Identify the label of the first PEM block in a text (returns 'CERTIFICATE').\",\"sql\":\"SELECT asn1.main.pem_label('-----BEGIN CERTIFICATE-----' || chr(10) || 'MIIBAg==' || chr(10) || '-----END CERTIFICATE-----') AS label;\"}]",
+        "vgi.keywords": "[\"pem\",\"pem_label\",\"armor\",\"begin\",\"certificate\",\"private key\",\"label\"]",
+        "vgi.title": "Detect a PEM Block's Label"
+      },
+      "VARCHAR",
+      [
+        "text"
+      ],
+      [
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22610,
+      [
+        "SELECT asn1.main.pem_label('-----BEGIN CERTIFICATE-----' || chr(10) || 'MIIBAg==' || chr(10) || '-----END CERTIFICATE-----') AS label;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "pkcs12_bags",
+      null,
+      "table",
+      "Walk a PKCS#12 keystore into one row per SafeBag",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Walk a PKCS#12 keystore (PFX \u2192 AuthenticatedSafe \u2192 SafeContents \u2192 SafeBag) into one row per bag: bag_type (keyBag, pkcs8ShroudedKeyBag, certBag, crlBag, \u2026), the friendlyName / localKeyID attributes, the named key algorithm, and \u2014 for cert bags \u2014 cert_sha256 (a join key to vgi-x509). Structural only: NEVER surfaces plaintext key material and decrypts nothing. The blob argument is a literal/scalar.",
+        "vgi.doc_md": "Walk a PKCS#12 keystore's bags (no key material). Columns: `bag_type`, `friendly_name`, `local_key_id`, `alg`, `cert_sha256`, `encrypted`.",
+        "vgi.example_queries": "[{\"description\":\"Walk a minimal PKCS#12 PFX and list each SafeBag's type, encryption flag, and (for cert bags) the vgi-x509 join hash.\",\"sql\":\"SELECT bag_type, encrypted, cert_sha256 FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a03f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020105')) ORDER BY bag_type;\"}]",
+        "vgi.keywords": "[\"pkcs12\",\"p12\",\"pfx\",\"pkcs12_bags\",\"keystore\",\"safebag\",\"certbag\",\"friendlyname\",\"x509\"]",
+        "vgi.result_columns_schema": "[{\"description\":\"SafeBag type, e.g. certBag, pkcs8ShroudedKeyBag.\",\"name\":\"bag_type\",\"type\":\"VARCHAR\"},{\"description\":\"friendlyName attribute, if present.\",\"name\":\"friendly_name\",\"type\":\"VARCHAR\"},{\"description\":\"localKeyID attribute (hex), if present.\",\"name\":\"local_key_id\",\"type\":\"VARCHAR\"},{\"description\":\"Named key algorithm (key bags).\",\"name\":\"alg\",\"type\":\"VARCHAR\"},{\"description\":\"SHA-256 (hex) of the cert (cert bags) \u2014 join to vgi-x509.\",\"name\":\"cert_sha256\",\"type\":\"VARCHAR\"},{\"description\":\"Whether the bag's key material is encrypted.\",\"name\":\"encrypted\",\"type\":\"BOOLEAN\"}]",
+        "vgi.title": "PKCS#12 Bags"
+      },
+      null,
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22621,
+      [
+        "SELECT bag_type, encrypted, cert_sha256 FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a03f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020105')) ORDER BY bag_type;"
+      ],
+      null,
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "pkcs8_info",
+      null,
+      "scalar",
+      "Structural PKCS#8 info: STRUCT(version, algorithm, params JSON, public_key BLOB, encrypted BOOL, kdf, enc_alg). Plaintext private-key octets are NEVER surfaced; encrypted keys name their PBES2/PBKDF2 OIDs.",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Decode a PKCS#8 PrivateKeyInfo (RFC 5208) or EncryptedPrivateKeyInfo into a typed `STRUCT`: version, the named key algorithm, its params as JSON, an optional surfaced public key (never the private key), an `encrypted` flag, and \u2014 for encrypted keys \u2014 the named PBES2 `kdf` and `enc_alg` OIDs. No decryption; plaintext key material is never exposed.",
+        "vgi.doc_md": "Inspect PKCS#8 key structure (no key material), e.g. `pkcs8_info(blob)`.",
+        "vgi.example_queries": "[{\"description\":\"Inspect a minimal PKCS#8 PrivateKeyInfo's structure (version 0, algorithm 'rsaEncryption') without exposing key material.\",\"sql\":\"SELECT asn1.main.pkcs8_info(from_hex('3016020100300d06092a864886f70d010101050004026869')) AS info;\"}]",
+        "vgi.keywords": "[\"pkcs8\",\"private key\",\"pkcs8_info\",\"encrypted key\",\"pbes2\",\"pbkdf2\",\"rfc 5208\",\"key info\"]",
+        "vgi.title": "PKCS#8 Key Info"
+      },
+      "STRUCT(\"version\" BIGINT, algorithm VARCHAR, params VARCHAR, public_key BLOB, \"encrypted\" BOOLEAN, kdf VARCHAR, enc_alg VARCHAR)",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22611,
+      [
+        "SELECT asn1.main.pkcs8_info(from_hex('3016020100300d06092a864886f70d010101050004026869')) AS info;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "reencode",
+      null,
+      "scalar",
+      "Re-encode a parsed blob to the target rules set named by the second argument (currently canonical DER for any 'der'/'cer'/'ber' value). NULL \u2192 NULL; a malformed blob \u2192 NULL.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Re-encode a parsed BER / CER / DER blob to a target rules set named by the second argument `rules` ('der'/'cer'/'ber'). The worker canonicalizes to DER (definite minimal lengths, sorted SET OF) for any rules value. Round-trips through decode; NULL or a malformed blob yields NULL.",
+        "vgi.doc_md": "Re-encode a blob to a rules set, e.g. `reencode(payload, 'der')`.",
+        "vgi.example_queries": "[{\"description\":\"Re-encode a blob to canonical DER (an already-canonical SEQUENCE round-trips unchanged).\",\"sql\":\"SELECT asn1.main.reencode(from_hex('3003020105')) AS der;\"},{\"description\":\"Re-encode a blob to canonical DER under an explicit 'der' rules set.\",\"sql\":\"SELECT asn1.main.reencode(from_hex('3003020105'), 'der') AS der;\"}]",
+        "vgi.keywords": "[\"asn1\",\"reencode\",\"der\",\"ber\",\"cer\",\"canonical\",\"normalize\",\"rules\"]",
+        "vgi.title": "Re-encode ASN.1"
+      },
+      "BLOB",
+      [
+        "blob",
+        "rules"
+      ],
+      [
+        "ANY",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22612,
+      [
+        "SELECT asn1.main.reencode(from_hex('3003020105'), 'der') AS der;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "reencode",
+      null,
+      "scalar",
+      "Re-encode a parsed blob to canonical DER (definite minimal lengths, sorted SET OF). NULL \u2192 NULL; a malformed blob \u2192 NULL. Pass a second 'rules' argument to name the target encoding explicitly.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Re-encode a parsed BER / CER / DER blob to a target rules set named by the second argument `rules` ('der'/'cer'/'ber'). The worker canonicalizes to DER (definite minimal lengths, sorted SET OF) for any rules value. Round-trips through decode; NULL or a malformed blob yields NULL.",
+        "vgi.doc_md": "Re-encode a blob to a rules set, e.g. `reencode(payload, 'der')`.",
+        "vgi.example_queries": "[{\"description\":\"Re-encode a blob to canonical DER (an already-canonical SEQUENCE round-trips unchanged).\",\"sql\":\"SELECT asn1.main.reencode(from_hex('3003020105')) AS der;\"},{\"description\":\"Re-encode a blob to canonical DER under an explicit 'der' rules set.\",\"sql\":\"SELECT asn1.main.reencode(from_hex('3003020105'), 'der') AS der;\"}]",
+        "vgi.keywords": "[\"asn1\",\"reencode\",\"der\",\"ber\",\"cer\",\"canonical\",\"normalize\",\"rules\"]",
+        "vgi.title": "Re-encode ASN.1"
+      },
+      "BLOB",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22612,
+      [
+        "SELECT asn1.main.reencode(from_hex('3003020105')) AS der;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "snmp_decode",
+      null,
+      "scalar",
+      "Decode an SNMP v1/v2c/v3 message to JSON (version, community, PDU, resolved varbinds).",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Decode an SNMP v1/v2c/v3 message (RFC 1157/3416) into a JSON `STRUCT`: version, community, pdu_type, request_id, error_status, error_index, trap fields, and a varbinds list (each with oid, resolved oid_name, SMI type, and value). The signature/auth envelope is not verified. Returns {error} on a non-SNMP blob.",
+        "vgi.doc_md": "Decode an SNMP PDU to JSON, e.g. `snmp_decode(payload)`.",
+        "vgi.example_queries": "[{\"description\":\"Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.\",\"sql\":\"SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg;\"}]",
+        "vgi.keywords": "[\"snmp\",\"snmp_decode\",\"varbind\",\"trap\",\"pdu\",\"oid\",\"mib\",\"rfc 1157\",\"rfc 3416\",\"network management\"]",
+        "vgi.title": "Decode SNMP Message"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22613,
+      [
+        "SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "snmp_varbinds",
+      null,
+      "table",
+      "Fan an SNMP PDU into one row per varbind",
+      null,
+      {
+        "vgi.category": "Security Modules",
+        "vgi.doc_llm": "Fan one SNMP PDU (RFC 1157/3416) into one row per varbind: the PDU request_id and pdu_type, then each varbind's OID, resolved oid_name, SMI type, and JSON value. The blob argument is a literal/scalar; for bulk per-row shredding of a column use the scalar snmp_decode().",
+        "vgi.doc_md": "Shred an SNMP PDU into one row per varbind. Columns: `request_id`, `pdu_type`, `oid`, `oid_name`, `type`, `value`.",
+        "vgi.example_queries": "[{\"description\":\"Shred an SNMP v2c GetResponse into its varbinds and project each OID, resolved name, and SMI type.\",\"sql\":\"SELECT oid, oid_name, type FROM asn1.main.snmp_varbinds(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) ORDER BY oid;\"}]",
+        "vgi.keywords": "[\"snmp\",\"varbind\",\"snmp_varbinds\",\"oid\",\"mib\",\"trap\",\"pdu\",\"shred\",\"rfc 3416\"]",
+        "vgi.result_columns_schema": "[{\"description\":\"The PDU request-id (NULL for v1 traps).\",\"name\":\"request_id\",\"type\":\"INTEGER\"},{\"description\":\"The PDU type, e.g. GetResponse, SNMPv2-Trap.\",\"name\":\"pdu_type\",\"type\":\"VARCHAR\"},{\"description\":\"The varbind OID, dotted-decimal.\",\"name\":\"oid\",\"type\":\"VARCHAR\"},{\"description\":\"The resolved OID name (NULL if unknown).\",\"name\":\"oid_name\",\"type\":\"VARCHAR\"},{\"description\":\"The SMI value type, e.g. Counter32, TimeTicks.\",\"name\":\"type\",\"type\":\"VARCHAR\"},{\"description\":\"The varbind value as JSON.\",\"name\":\"value\",\"type\":\"VARCHAR\"}]",
+        "vgi.title": "SNMP Varbinds"
+      },
+      null,
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22622,
+      [
+        "SELECT oid, oid_name, type FROM asn1.main.snmp_varbinds(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) ORDER BY oid;"
+      ],
+      null,
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "tlv",
+      null,
+      "scalar",
+      "Flatten a blob into a LIST of TLV nodes in document order: STRUCT(path, class, tag, tag_name, constructed, header_len, len, value JSON). The raw-structure escape hatch.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Flatten a BER/CER/DER blob into a `LIST` of every TLV node in document order \u2014 `STRUCT(path, class, tag, tag_name, constructed, header_len, len, value)` where `path` is a JSONPath-ish locator (e.g. `$.0.2`) and `value` is the node's JSON value. The escape hatch for callers who want the raw structure without type inference. Empty list for a malformed blob.",
+        "vgi.doc_md": "List the TLV nodes of a blob, e.g. `tlv(payload)`.",
+        "vgi.example_queries": "[{\"description\":\"List every TLV node of a DER `SEQUENCE { INTEGER 5 }` (the SEQUENCE and its child INTEGER).\",\"sql\":\"SELECT asn1.main.tlv(from_hex('3003020105')) AS nodes;\"}]",
+        "vgi.keywords": "[\"asn1\",\"tlv\",\"nodes\",\"path\",\"class\",\"tag\",\"length\",\"walk\",\"structure\",\"ber\",\"der\"]",
+        "vgi.title": "ASN.1 TLV Nodes"
+      },
+      "STRUCT(path VARCHAR, \"class\" VARCHAR, tag UINTEGER, tag_name VARCHAR, constructed BOOLEAN, header_len UINTEGER, len UBIGINT, \"value\" VARCHAR)[]",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22614,
+      [
+        "SELECT asn1.main.tlv(from_hex('3003020105')) AS nodes;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "to_der",
+      null,
+      "scalar",
+      "Re-encode a BER/CER blob to canonical DER (definite minimal lengths, sorted SET OF). Idempotent on DER; NULL \u2192 NULL; a malformed blob \u2192 NULL.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Re-encode a parsed BER / CER blob to canonical DER: definite minimal-length encodings, indefinite forms collapsed, and SET OF children sorted by their encoding. Idempotent on DER input and round-trips through decode \u2014 useful for normalizing captured BER before hashing or fingerprinting. NULL or a malformed blob yields NULL.",
+        "vgi.doc_md": "Re-encode a blob to canonical DER, e.g. `to_der(payload)`.",
+        "vgi.example_queries": "[{\"description\":\"Canonicalize a blob to DER; an already-canonical `SEQUENCE { INTEGER 5 }` round-trips to the same bytes.\",\"sql\":\"SELECT asn1.main.to_der(from_hex('3003020105')) AS der;\"}]",
+        "vgi.keywords": "[\"asn1\",\"to_der\",\"canonical\",\"der\",\"reencode\",\"normalize\",\"fingerprint\",\"ber to der\"]",
+        "vgi.title": "Canonicalize to DER"
+      },
+      "BLOB",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22615,
+      [
+        "SELECT asn1.main.to_der(from_hex('3003020105')) AS der;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "to_json",
+      null,
+      "scalar",
+      "Project a BER/CER/DER blob into self-describing JSON, one object per TLV node.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Project a BER/CER/DER blob into self-describing JSON: each node carries {class, tag, tag_name, constructed, value}, with OCTET/BIT STRING as base64url, OID as dotted+name, and time as ISO-8601. Always succeeds on a well-formed blob.",
+        "vgi.doc_md": "Project an ASN.1 blob to self-describing JSON, e.g. `to_json(payload)`.",
+        "vgi.example_queries": "[{\"description\":\"Project a DER `SEQUENCE { INTEGER 5 }` into self-describing JSON nodes.\",\"sql\":\"SELECT asn1.main.to_json(from_hex('3003020105')) AS json;\"}]",
+        "vgi.keywords": "[\"asn1\",\"to_json\",\"self-describing\",\"ber\",\"der\",\"json\",\"tlv\",\"node\",\"class\",\"tag\"]",
+        "vgi.title": "ASN.1 to Self-Describing JSON"
+      },
+      "VARCHAR",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22616,
+      [
+        "SELECT asn1.main.to_json(from_hex('3003020105')) AS json;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "asn1",
+      "22592",
+      "main",
+      "well_formed",
+      null,
+      "scalar",
+      "Structured well-formedness of a blob: STRUCT(ok BOOL, error VARCHAR, kind VARCHAR). kind \u2208 {truncated, trailing-bytes, invalid-tag, length-overflow, indefinite-in-der, non-canonical, bad-time, bad-oid, bad-utf8, nesting-limit, alloc-limit}. Never errors.",
+      null,
+      {
+        "vgi.category": "Generic ASN.1",
+        "vgi.doc_llm": "Return the structured well-formedness of a blob: `STRUCT(ok, error, kind)`. On failure `ok` is false and `kind` classifies the problem \u2014 truncated, trailing-bytes, invalid-tag, length-overflow, indefinite-in-der, non-canonical, bad-time, bad-oid, bad-utf8, nesting-limit, or alloc-limit \u2014 with a human `error` message. Total: a malformed (even hostile) blob returns ok=false, never crashing the scan; NULL input yields a NULL struct.",
+        "vgi.doc_md": "Triage a blob's well-formedness with a failure kind, e.g. `well_formed(data)`.",
+        "vgi.example_queries": "[{\"description\":\"Triage a DER `SEQUENCE { INTEGER 5 }`: returns STRUCT(ok=true, error=NULL, kind=NULL).\",\"sql\":\"SELECT asn1.main.well_formed(from_hex('3003020105')) AS w;\"}]",
+        "vgi.keywords": "[\"asn1\",\"well_formed\",\"validate\",\"error kind\",\"truncated\",\"length overflow\",\"triage\",\"robust\"]",
+        "vgi.title": "ASN.1 Well-Formed"
+      },
+      "STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22617,
+      [
+        "SELECT asn1.main.well_formed(from_hex('3003020105')) AS w;"
+      ],
+      "CONSISTENT",
+      []
+    ]
+  ]
+}

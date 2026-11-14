@@ -1,0 +1,582 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-release.json",
+      "sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "catalog_sha256": "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+        "notes": "Complete real v0.4.0 runtime exports contain31 function rows and1 physical table, zero views. Grouping overloads gives28 logical surfaces:22 scalars,5 producer functions and oid_registry. Authentication/write/difficult objects are not excluded. The initial static22 candidate count omitted the table registrations."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "catalog_sha256": "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38",
+        "notes": "Complete current public registration and the retained full release-to-main source diff establish28 matching public surfaces. All changed worker code concerns documentation and composed example metadata; codec, registration, schemas, runtime operations, dependencies and Arrow conversions are unchanged. Current mappings are explicitly source/interface compatibility; the notebooks execute releasev0.4.0."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_same_values_different_bytes.ipynb",
+      "sha256": "44aa0b243367d91bdffc6be22fa40ef8e3683920eb11c645e26b9f3d32cb277e",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "6e197820f8c09406b27ebf8a730454f70f7065daf0b928d9eb12f9daa18dcbe3"
+      }
+    },
+    {
+      "path": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+      "execution": {
+        "path": "coverage/run-02.json",
+        "sha256": "a01315e7d4d311a8578c6e9b1ce0cbb2c1699ee2068577aa616045ea184d796a"
+      }
+    },
+    {
+      "path": "03_pem_labels_and_body_validation.ipynb",
+      "sha256": "c631aac9053d1d00f736f28c7bbf0dddd00eb1ac57f8e578f1621e2c2cd7ad87",
+      "execution": {
+        "path": "coverage/run-03.json",
+        "sha256": "af378c02bc6f29ecd238dcf30b2766d05fae139766074fd9fd9472c615fb4601"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "well_formed"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "sql": [
+        {
+          "cell": "5ceec875",
+          "reference": "asn1.main.well_formed"
+        }
+      ],
+      "narrative_cells": [
+        "11e3218d"
+      ],
+      "result_cells": [
+        "5ceec875",
+        "716a2eb4"
+      ],
+      "interpretation_cells": [
+        "716a2eb4"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "44aa0b243367d91bdffc6be22fa40ef8e3683920eb11c645e26b9f3d32cb277e",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Separate malformed inputs from available normalization results.",
+        "finding": "Six of seven authored packets parse as BER by default; the broken length row retains its classified failure and NULL normalized bytes. Trimming the indefinite terminator reduces valid rows to five without changing other packets."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "is_valid"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "sql": [
+        {
+          "cell": "5ceec875",
+          "reference": "asn1.main.is_valid"
+        }
+      ],
+      "narrative_cells": [
+        "11e3218d"
+      ],
+      "result_cells": [
+        "5ceec875"
+      ],
+      "interpretation_cells": [
+        "de3516cb"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "44aa0b243367d91bdffc6be22fa40ef8e3683920eb11c645e26b9f3d32cb277e",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Compare the release DER structure check against BER framing diagnostics.",
+        "finding": "Indefinite and overlong length forms pass BER parsing but fail the DER structure check. The padded INTEGER passes that check despite retaining an extra content byte, so the notebook explicitly limits the result to this parser behavior rather than exhaustive DER conformance."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "decode"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "sql": [
+        {
+          "cell": "5ceec875",
+          "reference": "asn1.main.decode"
+        }
+      ],
+      "narrative_cells": [
+        "4fdedda4"
+      ],
+      "result_cells": [
+        "07a937b8",
+        "4af99ec8"
+      ],
+      "interpretation_cells": [
+        "de3516cb"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "44aa0b243367d91bdffc6be22fa40ef8e3683920eb11c645e26b9f3d32cb277e",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Compare decoded-value grouping with byte identity on known fixtures.",
+        "finding": "Four encodings of the same integer/OID/string values form one JSON group, whereas integer6 and the unknown-OID packet form separate groups. The four-byte-encoding group shrinks to two normalized encodings. This grouping is limited to these known inputs."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "to_der"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "sql": [
+        {
+          "cell": "5ceec875",
+          "reference": "asn1.main.to_der"
+        }
+      ],
+      "narrative_cells": [
+        "26b9e56b"
+      ],
+      "result_cells": [
+        "8aeeea5a",
+        "427eac9a",
+        "c85d6345"
+      ],
+      "interpretation_cells": [
+        "c288324f",
+        "de3516cb"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "44aa0b243367d91bdffc6be22fa40ef8e3683920eb11c645e26b9f3d32cb277e",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Measure which framing differences normalization removes and which payload bytes survive.",
+        "finding": "Normalization removes three bytes across the valid default collection; the padded INTEGER still occupies21 bytes. Five checks verify availability, idempotence, preserved decoded values and no size increase for this fixture family. The remaining two encodings explain why a normalized-byte hash is not universal value identity."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "reencode"
+      },
+      "notebook": "01_same_values_different_bytes.ipynb",
+      "sql": [
+        {
+          "cell": "reencode-results",
+          "reference": "asn1.main.reencode"
+        }
+      ],
+      "narrative_cells": [
+        "reencode-story"
+      ],
+      "result_cells": [
+        "reencode-results"
+      ],
+      "interpretation_cells": [
+        "reencode-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "44aa0b243367d91bdffc6be22fa40ef8e3683920eb11c645e26b9f3d32cb277e",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Check whether an explicit BER target preserves indefinite framing differently from to_der.",
+        "finding": "Both valid controls produce the same bytes as to_der for BER and DER target spellings. The indefinite form loses its framing while the padded integer payload survives; the target spelling does not select a distinct wire encoding in this release."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "to_json"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "typed-tree",
+          "reference": "asn1.main.to_json"
+        }
+      ],
+      "narrative_cells": [
+        "tree-story"
+      ],
+      "result_cells": [
+        "typed-tree"
+      ],
+      "interpretation_cells": [
+        "tree-story",
+        "trace-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Inspect tag-preserving JSON alongside the value-only projection.",
+        "finding": "The known packet returns a SEQUENCE root and three typed children. The typed JSON retains INTEGER, OBJECT IDENTIFIER and UTF8String tags around the values; this is generic structural inspection, not certificate decoding."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "dump"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "dump-query",
+          "reference": "asn1.main.dump"
+        }
+      ],
+      "narrative_cells": [
+        "tree-story"
+      ],
+      "result_cells": [
+        "dump-output"
+      ],
+      "interpretation_cells": [
+        "trace-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Locate the same packet fields in a human-readable offset trace.",
+        "finding": "The trace reports a two-byte root header with18 content bytes and child headers at byte offsets2,5,16. These match the INTEGER/OID/string order and explain why nested parent/child lengths overlap."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "tlv"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "nodes-query",
+          "reference": "asn1.main.tlv"
+        }
+      ],
+      "narrative_cells": [
+        "trace-finding"
+      ],
+      "result_cells": [
+        "nodes-output",
+        "inspection-chart"
+      ],
+      "interpretation_cells": [
+        "trace-finding",
+        "path-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Expose node paths and distinguish header/content lengths without summing nested ranges.",
+        "finding": "The root totals20 bytes; its three children total3,11,4 bytes and together occupy the root18-byte content. The figure explicitly labels overlapping nested rows and uses the same reported paths for navigation."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "at_path"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "path-results",
+          "reference": "asn1.main.at_path"
+        }
+      ],
+      "narrative_cells": [
+        "path-story"
+      ],
+      "result_cells": [
+        "path-results"
+      ],
+      "interpretation_cells": [
+        "path-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Retrieve values through discovered paths while retaining missing-path behavior.",
+        "finding": "The root returns the array, child paths retrieve5/the dotted OID/hi, and $.99 returns JSON null as non-NULL JSON text. The output exposes JSON kind and SQL NULL status so absence cannot be mistaken for a valid selected field."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "oids"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "oid-inventory",
+          "reference": "asn1.main.oids"
+        }
+      ],
+      "narrative_cells": [
+        "oid-story"
+      ],
+      "result_cells": [
+        "inventory-output",
+        "inspection-chart"
+      ],
+      "interpretation_cells": [
+        "inventory-output",
+        "experiment"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Inventory identifiers with their packet location before applying names.",
+        "finding": "The known packet contributes OID1.2.840.113549.1.1.11 at$.1 and the unknown packet contributes1.2.3.4.5 at$.0. Both survive the join; removing the unknown packet changes only that population."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "oid_registry"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "oid-inventory",
+          "reference": "asn1.main.oid_registry"
+        }
+      ],
+      "narrative_cells": [
+        "oid-story"
+      ],
+      "result_cells": [
+        "inventory-output"
+      ],
+      "interpretation_cells": [
+        "inventory-output",
+        "experiment"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Enrich actual observed identifiers using a left join to the bundled name vocabulary.",
+        "finding": "The table supplies sha256WithRSAEncryption for the known identifier and leaves the invented identifier unnamed. Discovery is used in the downstream lookup and the unknown row is retained rather than filtered away."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "oid_name"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "oid-inventory",
+          "reference": "asn1.main.oid_name"
+        }
+      ],
+      "narrative_cells": [
+        "oid-story"
+      ],
+      "result_cells": [
+        "inventory-output"
+      ],
+      "interpretation_cells": [
+        "inventory-output"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Compare scalar name resolution with table enrichment on the same observed identifiers.",
+        "finding": "The known scalar name matches the joined registry name and the unknown identifier returns NULL. Assertions reconcile both access forms without interpreting absence as malformed structure."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "oid"
+      },
+      "notebook": "02_nodes_paths_and_unknown_identifiers.ipynb",
+      "sql": [
+        {
+          "cell": "oid-inventory",
+          "reference": "asn1.main.oid"
+        }
+      ],
+      "narrative_cells": [
+        "oid-story"
+      ],
+      "result_cells": [
+        "inventory-output"
+      ],
+      "interpretation_cells": [
+        "inventory-output"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "805b20dccefd06206f14837b53e12b8746e4d38e1106bb34deab66b47a707cbc",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Resolve recognized names back to their original dotted identifiers.",
+        "finding": "sha256WithRSAEncryption resolves back to1.2.840.113549.1.1.11; unknown names remain NULL. The checked reverse lookup confirms this observed registry mapping, without claiming that algorithm use or authenticity follows from its presence."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "pem_label"
+      },
+      "notebook": "03_pem_labels_and_body_validation.ipynb",
+      "sql": [
+        {
+          "cell": "label-query",
+          "reference": "asn1.main.pem_label"
+        }
+      ],
+      "narrative_cells": [
+        "armor-story"
+      ],
+      "result_cells": [
+        "label-query"
+      ],
+      "interpretation_cells": [
+        "armor-story",
+        "body-output",
+        "experiment"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "c631aac9053d1d00f736f28c7bbf0dddd00eb1ac57f8e578f1621e2c2cd7ad87",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Determine what the first outer PEM label says independently of the body.",
+        "finding": "The default first label is CERTIFICATE even though its bytes decode to a bare integer SEQUENCE. Relabeling it PUBLIC KEY changes the text label while all body fingerprints, parse outcomes and values remain fixed."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "pem_decode"
+      },
+      "notebook": "03_pem_labels_and_body_validation.ipynb",
+      "sql": [
+        {
+          "cell": "split-blocks",
+          "reference": "asn1.main.pem_decode"
+        }
+      ],
+      "narrative_cells": [
+        "split-story",
+        "body-story"
+      ],
+      "result_cells": [
+        "split-blocks",
+        "body-output",
+        "body-chart"
+      ],
+      "interpretation_cells": [
+        "body-output",
+        "experiment"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root",
+        "reviewed_at": "2026-11-14T18:19:16.682975+00:00",
+        "notebook_sha256": "c631aac9053d1d00f736f28c7bbf0dddd00eb1ac57f8e578f1621e2c2cd7ad87",
+        "catalog_sha256": [
+          "bf1434602e0ed6621a4cb6a300863b3f7cf5e3fec78f237df452117157c981e0",
+          "6550fcd555572174bca6bd3ad567aa1feabb3986bb183349ac2a43f8ebca9c38"
+        ],
+        "purpose": "Separate base64 armor decoding from ASN.1 body validation across a bundle.",
+        "finding": "Three base64-decodable blocks yield5,5,3 bytes. The first two parse as integer SEQUENCEs; the third fails with length-overflow. Returned rows establish successful base64 decoding, not valid ASN.1 or a complete invalid-base64 rejection log. Literal-input constraints are explained next to the SQL."
+      }
+    }
+  ]
+}

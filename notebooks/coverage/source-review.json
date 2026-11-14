@@ -1,0 +1,22 @@
+{
+  "release": "v0.4.0",
+  "release_commit": "43666af9711588ca6d11bb6675f3e3baaa2940b5",
+  "current_commit": "c5e0d548e72a9bdaf64798398c86af9c3b148509",
+  "unchanged_paths": [
+    "crates/asn1-core",
+    "Cargo.toml",
+    "Cargo.lock",
+    "crates/asn1-worker/src/scalar/mod.rs",
+    "crates/asn1-worker/src/arrow_io.rs"
+  ],
+  "changed_paths": [
+    "crates/asn1-worker/src/composed.rs",
+    "crates/asn1-worker/src/main.rs",
+    "crates/asn1-worker/src/scalar/generic.rs",
+    "crates/asn1-worker/src/table/cms_signers.rs",
+    "crates/asn1-worker/src/table/mod.rs",
+    "crates/asn1-worker/src/table/pem_decode.rs",
+    "crates/asn1-worker/src/table/pkcs12_bags.rs"
+  ],
+  "review": "Full retained diff changes composed examples/catalog tags, documentation and example metadata only. Codec, runtime parsing, registration, output schemas, argument types and dependencies retain the released interface. All22 scalar names, five producer table functions and the directly scanned oid_registry table are counted. The notebook executes v0.4.0; current compatibility is a source/interface review, not a current notebook execution."
+}

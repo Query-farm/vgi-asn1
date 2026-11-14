@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-asn1",
+  "revision": "c5e0d548e72a9bdaf64798398c86af9c3b148509",
+  "captured_at": "2026-11-14T18:10:11.337022+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "objects": [
+    {
+      "schema": "main",
+      "name": "at_path",
+      "kind": "function",
+      "signatures": [
+        "at_path(ANY, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "cms_certs",
+      "kind": "function",
+      "signatures": [
+        "cms_certs(ANY) -> BLOB[]"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "cms_content",
+      "kind": "function",
+      "signatures": [
+        "cms_content(ANY) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "cms_decode",
+      "kind": "function",
+      "signatures": [
+        "cms_decode(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "cms_signers",
+      "kind": "function",
+      "signatures": [
+        "cms_signers(ANY) -> None"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "decode",
+      "kind": "function",
+      "signatures": [
+        "decode(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "decode",
+      "kind": "function",
+      "signatures": [
+        "decode(ANY, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "dump",
+      "kind": "function",
+      "signatures": [
+        "dump(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "dump",
+      "kind": "function",
+      "signatures": [
+        "dump(ANY, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "is_valid",
+      "kind": "function",
+      "signatures": [
+        "is_valid(ANY) -> BOOLEAN"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "is_valid",
+      "kind": "function",
+      "signatures": [
+        "is_valid(ANY, VARCHAR) -> BOOLEAN"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "krb_decode",
+      "kind": "function",
+      "signatures": [
+        "krb_decode(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "krb_ticket",
+      "kind": "function",
+      "signatures": [
+        "krb_ticket(ANY) -> STRUCT(tkt_vno BIGINT, realm VARCHAR, sname VARCHAR, name_type VARCHAR, enc_part_etype VARCHAR, enc_part_kvno BIGINT, enc_part_cipher BLOB)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "ldap_decode",
+      "kind": "function",
+      "signatures": [
+        "ldap_decode(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "ldap_messages",
+      "kind": "function",
+      "signatures": [
+        "ldap_messages(ANY) -> None"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "ocsp_decode",
+      "kind": "function",
+      "signatures": [
+        "ocsp_decode(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "oid",
+      "kind": "function",
+      "signatures": [
+        "oid(VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "oid_name",
+      "kind": "function",
+      "signatures": [
+        "oid_name(VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "oids",
+      "kind": "function",
+      "signatures": [
+        "oids(ANY) -> STRUCT(oid VARCHAR, \"name\" VARCHAR, path VARCHAR)[]"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "pem_decode",
+      "kind": "function",
+      "signatures": [
+        "pem_decode(VARCHAR) -> None"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "pem_label",
+      "kind": "function",
+      "signatures": [
+        "pem_label(VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "pkcs12_bags",
+      "kind": "function",
+      "signatures": [
+        "pkcs12_bags(ANY) -> None"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "pkcs8_info",
+      "kind": "function",
+      "signatures": [
+        "pkcs8_info(ANY) -> STRUCT(\"version\" BIGINT, algorithm VARCHAR, params VARCHAR, public_key BLOB, \"encrypted\" BOOLEAN, kdf VARCHAR, enc_alg VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "reencode",
+      "kind": "function",
+      "signatures": [
+        "reencode(ANY, VARCHAR) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "reencode",
+      "kind": "function",
+      "signatures": [
+        "reencode(ANY) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "snmp_decode",
+      "kind": "function",
+      "signatures": [
+        "snmp_decode(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "snmp_varbinds",
+      "kind": "function",
+      "signatures": [
+        "snmp_varbinds(ANY) -> None"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "tlv",
+      "kind": "function",
+      "signatures": [
+        "tlv(ANY) -> STRUCT(path VARCHAR, \"class\" VARCHAR, tag UINTEGER, tag_name VARCHAR, constructed BOOLEAN, header_len UINTEGER, len UBIGINT, \"value\" VARCHAR)[]"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "to_der",
+      "kind": "function",
+      "signatures": [
+        "to_der(ANY) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "to_json",
+      "kind": "function",
+      "signatures": [
+        "to_json(ANY) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "well_formed",
+      "kind": "function",
+      "signatures": [
+        "well_formed(ANY) -> STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "oid_registry",
+      "kind": "table",
+      "signatures": [
+        "TABLE"
+      ],
+      "authentication": "none",
+      "access": "read"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "coverage/current-catalog.rs",
+      "sha256": "6ccef7e30ab68efa146e5b3a5184428a60f6762540d38e4eff0516c9feae05cb",
+      "description": "Complete current registration or reviewed release/current source comparison"
+    },
+    {
+      "path": "coverage/current-scalars.rs",
+      "sha256": "12b0287bd50f9b2e2751a3d22d04d4493b72f6454be963e1da707d8e4acb8764",
+      "description": "Complete current registration or reviewed release/current source comparison"
+    },
+    {
+      "path": "coverage/current-tables.rs",
+      "sha256": "2981d0c26b1f6e3a84836071277d460dae13c56b097d86849bede6d07e514224",
+      "description": "Complete current registration or reviewed release/current source comparison"
+    },
+    {
+      "path": "coverage/release-to-current.diff",
+      "sha256": "2249a78c842ef0fcc8cdc6fd05452495a61820edad1266e637d9de412d04f32f",
+      "description": "Complete current registration or reviewed release/current source comparison"
+    },
+    {
+      "path": "coverage/source-review.json",
+      "sha256": "c9406b460e2967385f45776e705ede1a1635e348f658d9b83f2014b7f9ab9102",
+      "description": "Complete current registration or reviewed release/current source comparison"
+    }
+  ]
+}

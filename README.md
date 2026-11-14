@@ -170,4 +170,4 @@ MIT — Copyright 2026 Query Farm LLC.
 
 ## Notebooks
 
-[Run the executed ASN.1 encoding walkthrough](notebooks/README.md) to compare synthetic packets, validation diagnostics and the limits of structural normalization through SQL.
+[Three executed SQL narratives](notebooks/README.md) explore byte normalization, field paths and OID names, and PEM label/body validation. Each includes saved SVG charts and an Open in Colab link.

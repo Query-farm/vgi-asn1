@@ -1,0 +1,417 @@
+diff --git a/crates/asn1-worker/src/composed.rs b/crates/asn1-worker/src/composed.rs
+new file mode 100644
+index 0000000..32a1f6d
+--- /dev/null
++++ b/crates/asn1-worker/src/composed.rs
+@@ -0,0 +1,104 @@
++//! Composed example queries: each combines two or more of the worker's own
++//! objects in one realistic query. Each `(description, sql)` pair is defined
++//! once here and referenced from the schema-level `vgi.example_queries` list and
++//! from the example list of the object that drives the query (within its first
++//! five examples, which is all the `vgi-lint` agent simulator shows).
++//!
++//! Every query is offline and deterministic (blobs inlined via `from_hex` / PEM
++//! literals) and was executed against the worker; `test/sql/composed.test`
++//! pins the rows each description claims.
++
++/// A described example: `(description, sql)`.
++pub type Example = (&'static str, &'static str);
++
++/// `pem_decode` → `well_formed` + `oids` over each block's DER.
++pub const PEM_TRIAGE: Example = (
++    "Split a three-block PEM bundle (PRIVATE KEY, PKCS7, CERTIFICATE) and triage each block's \
++     DER: well-formedness, the classified failure kind, and how many OIDs it carries. The \
++     PRIVATE KEY (1 OID) and PKCS7 (3 OIDs) blocks are well-formed; the CERTIFICATE body is \
++     truncated and flagged ok=false with kind 'length-overflow'.",
++    "SELECT p.idx, p.label, (asn1.main.well_formed(p.der)).ok AS ok, \
++     (asn1.main.well_formed(p.der)).kind AS kind, len(asn1.main.oids(p.der)) AS n_oids \
++     FROM asn1.main.pem_decode('-----BEGIN PRIVATE KEY-----' || chr(10) || \
++     'MBYCAQAwDQYJKoZIhvcNAQEBBQAEAmhp' || chr(10) || '-----END PRIVATE KEY-----' || chr(10) || \
++     '-----BEGIN PKCS7-----' || chr(10) || \
++     'ME0CAQExADARBgkqhkiG9w0BBwGgBAQCaGmgBTADAgEFMSwwKgIBAYAEAQIDBDALBglghkgBZQMEAgEwDQYJKoZIhvcNAQEBBQAEA6q7zA==' \
++     || chr(10) || '-----END PKCS7-----' || chr(10) || '-----BEGIN CERTIFICATE-----' || \
++     chr(10) || 'MAUC' || chr(10) || '-----END CERTIFICATE-----') AS p ORDER BY p.idx;",
++);
++
++/// `pkcs12_bags` joined to the unnested `cms_certs` of a CMS SignedData by SHA-256.
++pub const P12_CMS_CERT_MATCH: Example = (
++    "Find the certificates a PKCS#12 keystore shares with a CMS SignedData: join the keystore's \
++     cert bags (cert_sha256) to the SHA-256 of each certificate embedded in the signed message \
++     (cms_certs). The keystore holds two certBags; only the one whose certificate is also \
++     embedded in the message (417c…d729) is returned.",
++    "SELECT b.bag_type, b.cert_sha256 \
++     FROM asn1.main.pkcs12_bags(from_hex('\
++     3079020103307406092a864886f70d010701a06704653063306106092a864886f70d010701a054045230503026\
++     060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a007040530030201053026060b2a8648\
++     86f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020106')) AS b \
++     JOIN (SELECT unnest(asn1.main.cms_certs(from_hex('304d0201013100301106092a864886f70d010701a004\
++     04026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d\
++     01010105000403aabbcc'))) AS cert) AS c ON sha256(c.cert) = b.cert_sha256 \
++     ORDER BY b.cert_sha256;",
++);
++
++/// `cms_signers` joined to the `oid_registry` table to recover dotted OIDs.
++pub const SIGNER_ALG_OIDS: Example = (
++    "Shred a CMS SignedData's signers and join the oid_registry table to recover the dotted OIDs \
++     behind the named digest and signature algorithms (sha256 → 2.16.840.1.101.3.4.2.1, \
++     rsaEncryption → 1.2.840.113549.1.1.1).",
++    "SELECT s.digest_alg, d.oid AS digest_oid, s.sig_alg, g.oid AS sig_oid \
++     FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d010701a00404026869a005\
++     3003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d0101010500\
++     0403aabbcc')) AS s \
++     LEFT JOIN asn1.main.oid_registry AS d ON d.name = s.digest_alg \
++     LEFT JOIN asn1.main.oid_registry AS g ON g.name = s.sig_alg ORDER BY s.signer_sid;",
++);
++
++/// `to_der` canonicalization checked with `is_valid` and `decode`.
++pub const CANONICALIZE_CHECK: Example = (
++    "Canonicalize an indefinite-length BER blob with to_der, then prove the result: is_valid \
++     under strict DER is false before and true after, and decode yields the same value for both \
++     encodings. The canonical bytes are 300404024869.",
++    "SELECT asn1.main.is_valid(b, 'der') AS der_before, hex(asn1.main.to_der(b)) AS der_hex, \
++     asn1.main.is_valid(asn1.main.to_der(b), 'der') AS der_after, \
++     asn1.main.decode(b) = asn1.main.decode(asn1.main.to_der(b)) AS same_value \
++     FROM (SELECT from_hex('3080040248690000') AS b) AS t;",
++);
++
++/// All composed examples, in schema-listing order.
++pub const ALL: [Example; 4] = [
++    PEM_TRIAGE,
++    P12_CMS_CERT_MATCH,
++    SIGNER_ALG_OIDS,
++    CANONICALIZE_CHECK,
++];
++
++#[cfg(test)]
++mod tests {
++    use super::ALL;
++
++    /// Every composed SQL runs verbatim in the haybarn E2E suite, which pins the
++    /// rows its description claims; this guards the two against drifting apart.
++    #[test]
++    fn composed_examples_are_pinned_by_e2e() {
++        let suite = include_str!("../../../test/sql/composed.test");
++        for (description, sql) in ALL {
++            assert!(
++                suite.contains(sql),
++                "composed example not run verbatim in test/sql/composed.test: {description}"
++            );
++        }
++    }
++
++    /// Each composed SQL is catalog-qualified (VGI505) with no bare `SELECT *` (VGI514).
++    #[test]
++    fn composed_examples_are_qualified_and_projected() {
++        for (_, sql) in ALL {
++            assert!(sql.contains("asn1.main."), "{sql}");
++            assert!(!sql.contains("SELECT *"), "{sql}");
++        }
++    }
++}
+diff --git a/crates/asn1-worker/src/main.rs b/crates/asn1-worker/src/main.rs
+index ad73f8c..324d922 100644
+--- a/crates/asn1-worker/src/main.rs
++++ b/crates/asn1-worker/src/main.rs
+@@ -13,13 +13,14 @@
+ //! SELECT decode(from_hex('3003020105'));        -- '[5]'
+ //! SELECT to_json(payload), dump(payload) FROM read_blob('a.der');
+ //! SELECT oids(data) FROM blobs;                 -- OID inventory
+-//! SELECT * FROM cms_blobs b, LATERAL cms_signers(b.data) s;
++//! SELECT digest_alg, sig_alg FROM cms_signers(from_hex('3080…'));  -- literal blob only
+ //! ```
+ //!
+ //! The pure codec + structural decoders live in the `asn1-core` crate; the
+ //! `scalar/`, `table/`, and `table_in_out/` modules are thin Arrow adapters.
+ 
+ mod arrow_io;
++mod composed;
+ mod meta;
+ mod scalar;
+ mod table;
+@@ -210,6 +211,29 @@ fn agent_test_tasks() -> Vec<meta::AgentTask> {
+             "Browse the OID registry table and give the friendly name the worker assigns to the \
+              OBJECT IDENTIFIER 1.2.840.113549.1.1.11. Return a single column named name.",
+         ),
++        t(
++            "pem_bundle_key_algorithm",
++            "This PEM bundle holds a PKCS7 block followed by a PRIVATE KEY block. What named key \
++             algorithm does the PRIVATE KEY block's PKCS#8 structure declare? Return a single \
++             VARCHAR column named algorithm.\n\
++             -----BEGIN PKCS7-----\n\
++             ME0CAQExADARBgkqhkiG9w0BBwGgBAQCaGmgBTADAgEFMSwwKgIBAYAEAQIDBDALBglghkgBZQMEAgEwDQYJ\
++             KoZIhvcNAQEBBQAEA6q7zA==\n-----END PKCS7-----\n\
++             -----BEGIN PRIVATE KEY-----\nMBYCAQAwDQYJKoZIhvcNAQEBBQAEAmhp\n\
++             -----END PRIVATE KEY-----",
++        ),
++        t(
++            "keystore_certs_in_cms",
++            "The PKCS#12 PFX with hex \
++             3079020103307406092a864886f70d010701a06704653063306106092a864886f70d010701a0540452\
++             30503026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a007040530030201\
++             053026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020106 \
++             holds two certificate bags. How many of them hold a certificate that is also \
++             embedded in the CMS SignedData with hex \
++             304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a0201018\
++             00401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc \
++             (match certificates by SHA-256)? Return a single BIGINT column named n.",
++        ),
+     ]
+ }
+ 
+@@ -229,7 +253,8 @@ fn catalog_metadata(name: &str) -> CatalogModel {
+             ),
+             (
+                 "vgi.subtitle".to_string(),
+-                "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP                  messages into SQL rows."
++                "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP messages \
++                 into SQL rows."
+                     .to_string(),
+             ),
+             (
+@@ -352,42 +377,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
+                 ),
+                 (
+                     "vgi.example_queries".to_string(),
+-                    crate::meta::example_queries_json(&[
+-                        (
+-                            "Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON \
+-                             projection.",
+-                            "SELECT asn1.main.decode(from_hex('3003020105'));",
+-                        ),
+-                        (
+-                            "Project the same blob into self-describing JSON, one object per TLV \
+-                             node.",
+-                            "SELECT asn1.main.to_json(from_hex('3003020105'));",
+-                        ),
+-                        (
+-                            "Render an `openssl asn1parse`-style indented text dump of the blob.",
+-                            "SELECT asn1.main.dump(from_hex('3003020105'));",
+-                        ),
+-                        (
+-                            "Resolve a dotted OID to its friendly algorithm name \
+-                             ('sha256WithRSAEncryption').",
+-                            "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
+-                        ),
+-                        (
+-                            "Triage a truncated blob — `well_formed(...).ok` is false.",
+-                            "SELECT (asn1.main.well_formed(from_hex('300502'))).ok;",
+-                        ),
+-                        (
+-                            "Validate a bare INTEGER 5 under strict DER encoding rules.",
+-                            "SELECT asn1.main.is_valid(from_hex('020105'), 'der');",
+-                        ),
+-                    ]),
++                    crate::meta::example_queries_json(&schema_examples()),
+                 ),
+                 (
+                     "vgi.executable_examples".to_string(),
+-                    // Self-contained, must-run walkthrough (verified against the worker).
+-                    // Blobs are inlined via from_hex() so each statement runs as written.
+-                    r#"[{"name":"decode_generic","description":"Decode a generic DER SEQUENCE { INTEGER 5 } into its nested typed JSON projection.","sql":"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded"},{"name":"resolve_oid","description":"Resolve a dotted OID to its friendly name from the bundled registry.","sql":"SELECT asn1.main.oid_name('1.2.840.113549.1.1.11') AS name"},{"name":"snmp_to_json","description":"Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.","sql":"SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg"},{"name":"cms_content_type","description":"Decode a minimal CMS ContentInfo and read its content type.","sql":"SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info"}]"#
+-                        .to_string(),
++                    executable_examples_json(),
+                 ),
+             ],
+             views: Vec::new(),
+@@ -398,6 +392,58 @@ fn catalog_metadata(name: &str) -> CatalogModel {
+     }
+ }
+ 
++/// The schema-level `vgi.example_queries` list: the single-object basics, then
++/// the composed examples (each also listed on the object that drives it).
++fn schema_examples() -> Vec<composed::Example> {
++    let mut v: Vec<composed::Example> = vec![
++        (
++            "Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON \
++             projection.",
++            "SELECT asn1.main.decode(from_hex('3003020105'));",
++        ),
++        (
++            "Project the same blob into self-describing JSON, one object per TLV \
++             node.",
++            "SELECT asn1.main.to_json(from_hex('3003020105'));",
++        ),
++        (
++            "Render an `openssl asn1parse`-style indented text dump of the blob.",
++            "SELECT asn1.main.dump(from_hex('3003020105'));",
++        ),
++        (
++            "Resolve a dotted OID to its friendly algorithm name \
++             ('sha256WithRSAEncryption').",
++            "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
++        ),
++        (
++            "Triage a truncated blob — `well_formed(...).ok` is false.",
++            "SELECT (asn1.main.well_formed(from_hex('300502'))).ok;",
++        ),
++        (
++            "Validate a bare INTEGER 5 under strict DER encoding rules.",
++            "SELECT asn1.main.is_valid(from_hex('020105'), 'der');",
++        ),
++    ];
++    v.extend(composed::ALL);
++    v
++}
++
++/// The schema's `vgi.executable_examples`: self-contained, must-run statements
++/// (verified against the worker; blobs inlined via `from_hex()`), ending with the
++/// offline, deterministic composed PEM triage.
++fn executable_examples_json() -> String {
++    let mut items: Vec<serde_json::Value> = serde_json::from_str(EXECUTABLE_EXAMPLES_BASE)
++        .expect("EXECUTABLE_EXAMPLES_BASE is valid JSON");
++    items.push(serde_json::json!({
++        "name": "pem_bundle_triage",
++        "description": composed::PEM_TRIAGE.0,
++        "sql": composed::PEM_TRIAGE.1,
++    }));
++    serde_json::Value::Array(items).to_string()
++}
++
++const EXECUTABLE_EXAMPLES_BASE: &str = r#"[{"name":"decode_generic","description":"Decode a generic DER SEQUENCE { INTEGER 5 } into its nested typed JSON projection.","sql":"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded"},{"name":"resolve_oid","description":"Resolve a dotted OID to its friendly name from the bundled registry.","sql":"SELECT asn1.main.oid_name('1.2.840.113549.1.1.11') AS name"},{"name":"snmp_to_json","description":"Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.","sql":"SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg"},{"name":"cms_content_type","description":"Decode a minimal CMS ContentInfo and read its content type.","sql":"SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info"}]"#;
++
+ /// The browsable `oid_registry` catalog table: the curated OID → name registry,
+ /// function-backed (no scan arguments) so an agent can `SELECT * FROM
+ /// asn1.main.oid_registry` without knowing any inputs. Being a real table (not
+diff --git a/crates/asn1-worker/src/scalar/generic.rs b/crates/asn1-worker/src/scalar/generic.rs
+index 33b9a91..291c987 100644
+--- a/crates/asn1-worker/src/scalar/generic.rs
++++ b/crates/asn1-worker/src/scalar/generic.rs
+@@ -984,6 +984,10 @@ impl ScalarFunction for ToDer {
+                               5 }` round-trips to the same bytes."
+                         .into(),
+                 expected_output: None,
++            }, FunctionExample {
++                sql: crate::composed::CANONICALIZE_CHECK.1.into(),
++                description: crate::composed::CANONICALIZE_CHECK.0.into(),
++                expected_output: None,
+             }],
+             tags: with_examples(
+                 crate::meta::object_tags(
+@@ -1002,7 +1006,7 @@ impl ScalarFunction for ToDer {
+                     "Canonicalize a blob to DER; an already-canonical `SEQUENCE { INTEGER 5 }` \
+                      round-trips to the same bytes.",
+                     "SELECT asn1.main.to_der(from_hex('3003020105')) AS der;",
+-                )],
++                ), crate::composed::CANONICALIZE_CHECK],
+             ),
+             ..Default::default()
+         }
+diff --git a/crates/asn1-worker/src/table/cms_signers.rs b/crates/asn1-worker/src/table/cms_signers.rs
+index d9757cc..4a015d7 100644
+--- a/crates/asn1-worker/src/table/cms_signers.rs
++++ b/crates/asn1-worker/src/table/cms_signers.rs
+@@ -153,15 +153,25 @@ impl TableFunction for CmsSigners {
+         ));
+         tags.push((
+             "vgi.example_queries".into(),
+-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
++            crate::meta::example_queries_json(&[
++                (ex_desc, ex_sql),
++                crate::composed::SIGNER_ALG_OIDS,
++            ]),
+         ));
+         FunctionMetadata {
+             description: "Shred a CMS SignedData into one row per SignerInfo".into(),
+-            examples: vec![FunctionExample {
+-                sql: ex_sql.into(),
+-                description: ex_desc.into(),
+-                expected_output: None,
+-            }],
++            examples: vec![
++                FunctionExample {
++                    sql: ex_sql.into(),
++                    description: ex_desc.into(),
++                    expected_output: None,
++                },
++                FunctionExample {
++                    sql: crate::composed::SIGNER_ALG_OIDS.1.into(),
++                    description: crate::composed::SIGNER_ALG_OIDS.0.into(),
++                    expected_output: None,
++                },
++            ],
+             tags,
+             ..Default::default()
+         }
+diff --git a/crates/asn1-worker/src/table/mod.rs b/crates/asn1-worker/src/table/mod.rs
+index 3bf746b..c8827ab 100644
+--- a/crates/asn1-worker/src/table/mod.rs
++++ b/crates/asn1-worker/src/table/mod.rs
+@@ -6,7 +6,8 @@
+ //! table-function binder accepts only literal parameters — it rejects a
+ //! correlated `LATERAL f(t.col)` column — so per-row bulk shredding over a column
+ //! is done with the scalar `*_decode` JSON functions, while these table functions
+-//! shred a single (literal or scalar-subquery) blob into typed rows.
++//! shred a single literal (constant-expression) blob into typed rows; a scalar
++//! subquery argument is rejected ("Table function cannot contain subqueries").
+ 
+ mod cms_signers;
+ mod ldap_messages;
+diff --git a/crates/asn1-worker/src/table/pem_decode.rs b/crates/asn1-worker/src/table/pem_decode.rs
+index 00e3904..a24e879 100644
+--- a/crates/asn1-worker/src/table/pem_decode.rs
++++ b/crates/asn1-worker/src/table/pem_decode.rs
+@@ -83,15 +83,22 @@ impl TableFunction for PemDecode {
+         ));
+         tags.push((
+             "vgi.example_queries".into(),
+-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
++            crate::meta::example_queries_json(&[(ex_desc, ex_sql), crate::composed::PEM_TRIAGE]),
+         ));
+         FunctionMetadata {
+             description: "Split a PEM bundle into its DER blocks (idx, label, der)".into(),
+-            examples: vec![FunctionExample {
+-                sql: ex_sql.into(),
+-                description: ex_desc.into(),
+-                expected_output: None,
+-            }],
++            examples: vec![
++                FunctionExample {
++                    sql: ex_sql.into(),
++                    description: ex_desc.into(),
++                    expected_output: None,
++                },
++                FunctionExample {
++                    sql: crate::composed::PEM_TRIAGE.1.into(),
++                    description: crate::composed::PEM_TRIAGE.0.into(),
++                    expected_output: None,
++                },
++            ],
+             tags,
+             ..Default::default()
+         }
+diff --git a/crates/asn1-worker/src/table/pkcs12_bags.rs b/crates/asn1-worker/src/table/pkcs12_bags.rs
+index d962002..e853a6d 100644
+--- a/crates/asn1-worker/src/table/pkcs12_bags.rs
++++ b/crates/asn1-worker/src/table/pkcs12_bags.rs
+@@ -106,15 +106,25 @@ impl TableFunction for Pkcs12Bags {
+         ));
+         tags.push((
+             "vgi.example_queries".into(),
+-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
++            crate::meta::example_queries_json(&[
++                (ex_desc, ex_sql),
++                crate::composed::P12_CMS_CERT_MATCH,
++            ]),
+         ));
+         FunctionMetadata {
+             description: "Walk a PKCS#12 keystore into one row per SafeBag".into(),
+-            examples: vec![FunctionExample {
+-                sql: ex_sql.into(),
+-                description: ex_desc.into(),
+-                expected_output: None,
+-            }],
++            examples: vec![
++                FunctionExample {
++                    sql: ex_sql.into(),
++                    description: ex_desc.into(),
++                    expected_output: None,
++                },
++                FunctionExample {
++                    sql: crate::composed::P12_CMS_CERT_MATCH.1.into(),
++                    description: crate::composed::P12_CMS_CERT_MATCH.0.into(),
++                    expected_output: None,
++                },
++            ],
+             tags,
+             ..Default::default()
+         }
