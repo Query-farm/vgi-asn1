@@ -13,13 +13,14 @@
 //! SELECT decode(from_hex('3003020105'));        -- '[5]'
 //! SELECT to_json(payload), dump(payload) FROM read_blob('a.der');
 //! SELECT oids(data) FROM blobs;                 -- OID inventory
-//! SELECT * FROM cms_blobs b, LATERAL cms_signers(b.data) s;
+//! SELECT digest_alg, sig_alg FROM cms_signers(from_hex('3080…'));  -- literal blob only
 //! ```
 //!
 //! The pure codec + structural decoders live in the `asn1-core` crate; the
 //! `scalar/`, `table/`, and `table_in_out/` modules are thin Arrow adapters.
 
 mod arrow_io;
+mod composed;
 mod meta;
 mod scalar;
 mod table;
@@ -210,6 +211,27 @@ fn agent_test_tasks() -> Vec<meta::AgentTask> {
             "Browse the OID registry table and give the friendly name the worker assigns to the \
              OBJECT IDENTIFIER 1.2.840.113549.1.1.11. Return a single column named name.",
         ),
+        t(
+            "pem_bundle_key_algorithm",
+            "This PEM bundle holds a PKCS7 block followed by a PRIVATE KEY block. What named key \
+             algorithm does the PRIVATE KEY block's PKCS#8 structure declare? Return a single \
+             VARCHAR column named algorithm.\n\
+             -----BEGIN PKCS7-----\n\
+             ME0CAQExADARBgkqhkiG9w0BBwGgBAQCaGmgBTADAgEFMSwwKgIBAYAEAQIDBDALBglghkgBZQMEAgEwDQYJ\
+             KoZIhvcNAQEBBQAEA6q7zA==\n-----END PKCS7-----\n\
+             -----BEGIN PRIVATE KEY-----\nMBYCAQAwDQYJKoZIhvcNAQEBBQAEAmhp\n\
+             -----END PRIVATE KEY-----",
+        ),
+        t(
+            "keystore_certs_in_cms",
+            "How many certificate bags in the PKCS#12 PFX with hex \
+             3051020103304c06092a864886f70d010701a03f043d303b303906092a864886f70d010701a02c042\
+             a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020\
+             105 hold a certificate that is also embedded in the CMS SignedData with hex \
+             304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a0201018\
+             00401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc \
+             (match certificates by SHA-256)? Return a single BIGINT column named n.",
+        ),
     ]
 }
 
@@ -229,7 +251,8 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.subtitle".to_string(),
-                "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP                  messages into SQL rows."
+                "Decode ASN.1 BER/DER blobs and SNMP, Kerberos, LDAP, CMS, PKCS and OCSP messages \
+                 into SQL rows."
                     .to_string(),
             ),
             (
@@ -352,42 +375,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ),
                 (
                     "vgi.example_queries".to_string(),
-                    crate::meta::example_queries_json(&[
-                        (
-                            "Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON \
-                             projection.",
-                            "SELECT asn1.main.decode(from_hex('3003020105'));",
-                        ),
-                        (
-                            "Project the same blob into self-describing JSON, one object per TLV \
-                             node.",
-                            "SELECT asn1.main.to_json(from_hex('3003020105'));",
-                        ),
-                        (
-                            "Render an `openssl asn1parse`-style indented text dump of the blob.",
-                            "SELECT asn1.main.dump(from_hex('3003020105'));",
-                        ),
-                        (
-                            "Resolve a dotted OID to its friendly algorithm name \
-                             ('sha256WithRSAEncryption').",
-                            "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
-                        ),
-                        (
-                            "Triage a truncated blob — `well_formed(...).ok` is false.",
-                            "SELECT (asn1.main.well_formed(from_hex('300502'))).ok;",
-                        ),
-                        (
-                            "Validate a bare INTEGER 5 under strict DER encoding rules.",
-                            "SELECT asn1.main.is_valid(from_hex('020105'), 'der');",
-                        ),
-                    ]),
+                    crate::meta::example_queries_json(&schema_examples()),
                 ),
                 (
                     "vgi.executable_examples".to_string(),
-                    // Self-contained, must-run walkthrough (verified against the worker).
-                    // Blobs are inlined via from_hex() so each statement runs as written.
-                    r#"[{"name":"decode_generic","description":"Decode a generic DER SEQUENCE { INTEGER 5 } into its nested typed JSON projection.","sql":"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded"},{"name":"resolve_oid","description":"Resolve a dotted OID to its friendly name from the bundled registry.","sql":"SELECT asn1.main.oid_name('1.2.840.113549.1.1.11') AS name"},{"name":"snmp_to_json","description":"Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.","sql":"SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg"},{"name":"cms_content_type","description":"Decode a minimal CMS ContentInfo and read its content type.","sql":"SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info"}]"#
-                        .to_string(),
+                    executable_examples_json(),
                 ),
             ],
             views: Vec::new(),
@@ -397,6 +389,58 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         ..Default::default()
     }
 }
+
+/// The schema-level `vgi.example_queries` list: the single-object basics, then
+/// the composed examples (each also listed on the object that drives it).
+fn schema_examples() -> Vec<composed::Example> {
+    let mut v: Vec<composed::Example> = vec![
+        (
+            "Decode a DER `SEQUENCE { INTEGER 5 }` into its nested typed JSON \
+                             projection.",
+            "SELECT asn1.main.decode(from_hex('3003020105'));",
+        ),
+        (
+            "Project the same blob into self-describing JSON, one object per TLV \
+                             node.",
+            "SELECT asn1.main.to_json(from_hex('3003020105'));",
+        ),
+        (
+            "Render an `openssl asn1parse`-style indented text dump of the blob.",
+            "SELECT asn1.main.dump(from_hex('3003020105'));",
+        ),
+        (
+            "Resolve a dotted OID to its friendly algorithm name \
+                             ('sha256WithRSAEncryption').",
+            "SELECT asn1.main.oid_name('1.2.840.113549.1.1.11');",
+        ),
+        (
+            "Triage a truncated blob — `well_formed(...).ok` is false.",
+            "SELECT (asn1.main.well_formed(from_hex('300502'))).ok;",
+        ),
+        (
+            "Validate a bare INTEGER 5 under strict DER encoding rules.",
+            "SELECT asn1.main.is_valid(from_hex('020105'), 'der');",
+        ),
+    ];
+    v.extend(composed::ALL);
+    v
+}
+
+/// The schema's `vgi.executable_examples`: self-contained, must-run statements
+/// (verified against the worker; blobs inlined via `from_hex()`), ending with the
+/// offline, deterministic composed PEM triage.
+fn executable_examples_json() -> String {
+    let mut items: Vec<serde_json::Value> = serde_json::from_str(EXECUTABLE_EXAMPLES_BASE)
+        .expect("EXECUTABLE_EXAMPLES_BASE is valid JSON");
+    items.push(serde_json::json!({
+        "name": "pem_bundle_triage",
+        "description": composed::PEM_TRIAGE.0,
+        "sql": composed::PEM_TRIAGE.1,
+    }));
+    serde_json::Value::Array(items).to_string()
+}
+
+const EXECUTABLE_EXAMPLES_BASE: &str = r#"[{"name":"decode_generic","description":"Decode a generic DER SEQUENCE { INTEGER 5 } into its nested typed JSON projection.","sql":"SELECT asn1.main.decode(from_hex('3003020105')) AS decoded"},{"name":"resolve_oid","description":"Resolve a dotted OID to its friendly name from the bundled registry.","sql":"SELECT asn1.main.oid_name('1.2.840.113549.1.1.11') AS name"},{"name":"snmp_to_json","description":"Decode a real SNMP GetResponse (community 'public') into JSON with its resolved varbinds.","sql":"SELECT asn1.main.snmp_decode(from_hex('302e02010104067075626c6963a2210201010201000201003016301406082b060102010101000408526f757465724f53')) AS msg"},{"name":"cms_content_type","description":"Decode a minimal CMS ContentInfo and read its content type.","sql":"SELECT asn1.main.cms_decode(from_hex('301106092a864886f70d010701a00404026869')) AS info"}]"#;
 
 /// The browsable `oid_registry` catalog table: the curated OID → name registry,
 /// function-backed (no scan arguments) so an agent can `SELECT * FROM

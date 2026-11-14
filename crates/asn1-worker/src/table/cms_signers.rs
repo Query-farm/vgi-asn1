@@ -153,15 +153,25 @@ impl TableFunction for CmsSigners {
         ));
         tags.push((
             "vgi.example_queries".into(),
-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+            crate::meta::example_queries_json(&[
+                (ex_desc, ex_sql),
+                crate::composed::SIGNER_ALG_OIDS,
+            ]),
         ));
         FunctionMetadata {
             description: "Shred a CMS SignedData into one row per SignerInfo".into(),
-            examples: vec![FunctionExample {
-                sql: ex_sql.into(),
-                description: ex_desc.into(),
-                expected_output: None,
-            }],
+            examples: vec![
+                FunctionExample {
+                    sql: ex_sql.into(),
+                    description: ex_desc.into(),
+                    expected_output: None,
+                },
+                FunctionExample {
+                    sql: crate::composed::SIGNER_ALG_OIDS.1.into(),
+                    description: crate::composed::SIGNER_ALG_OIDS.0.into(),
+                    expected_output: None,
+                },
+            ],
             tags,
             ..Default::default()
         }

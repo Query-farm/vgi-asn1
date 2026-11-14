@@ -6,7 +6,8 @@
 //! table-function binder accepts only literal parameters — it rejects a
 //! correlated `LATERAL f(t.col)` column — so per-row bulk shredding over a column
 //! is done with the scalar `*_decode` JSON functions, while these table functions
-//! shred a single (literal or scalar-subquery) blob into typed rows.
+//! shred a single literal (constant-expression) blob into typed rows; a scalar
+//! subquery argument is rejected ("Table function cannot contain subqueries").
 
 mod cms_signers;
 mod ldap_messages;

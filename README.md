@@ -33,9 +33,16 @@ SELECT oids(data) FROM blobs;                          -- LIST<STRUCT(oid,name,p
 -- Robust, verify-free triage: well-formedness with a classified failure kind.
 SELECT well_formed(data) FROM unknown_blobs WHERE NOT (well_formed(data)).ok;
 
--- Shred a CMS SignedData and join embedded signer certs to vgi-x509.
+-- Shred a CMS SignedData (a literal blob) into one row per signer; the
+-- signer_cert_sha256 column joins embedded signer certs to vgi-x509.
 SELECT s.digest_alg, s.sig_alg, s.signing_time, s.signer_cert_sha256
-FROM asn1.main.cms_signers(read_blob('codesign.p7s')) s;
+FROM cms_signers(from_hex('304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc')) s;
+
+-- Compose: split a PEM bundle, then triage each block's DER with the scalars.
+SELECT p.idx, p.label, (well_formed(p.der)).ok AS ok, len(oids(p.der)) AS n_oids
+FROM pem_decode('-----BEGIN PRIVATE KEY-----' || chr(10) || 'MBYCAQAwDQYJKoZIhvcNAQEBBQAEAmhp'
+                || chr(10) || '-----END PRIVATE KEY-----') p
+ORDER BY p.idx;                                        -- 0, PRIVATE KEY, true, 1
 ```
 
 ## Quick start
@@ -132,7 +139,8 @@ duckdb -c "LOAD vgi;
 cargo test                                  # unit + golden vectors + proptest (zero-panic gate)
 cargo clippy --all-targets -- -D warnings
 cargo fmt --all -- --check
-make test-sql                               # DuckDB sqllogictest E2E over all transports
+HAYBARN_UNITTEST=$(which haybarn-unittest) WORKER_BIN=$PWD/target/release/asn1-worker \
+  TRANSPORT=subprocess ci/run-integration.sh  # DuckDB sqllogictest E2E (also http / unix)
 ```
 
 The E2E suite (`test/sql/*.test`) runs the worker through the real DuckDB `vgi`
@@ -141,12 +149,13 @@ extension over the **subprocess + unix + HTTP** transport matrix via
 
 ## Notes & limitations
 
-- The vgi extension's table-function binder accepts **literal / scalar**
-  parameters — it rejects a correlated `LATERAL f(t.col)` column. For bulk
+- The vgi extension's table-function binder accepts only **literal** (constant-
+  expression, e.g. `from_hex('…')`) parameters — it rejects a correlated
+  `LATERAL f(t.col)` column and a scalar subquery. For bulk
   per-row shredding over a `BLOB` column, use the scalar `*_decode` JSON
   functions (which run per row); the table functions (`snmp_varbinds`,
   `ldap_messages`, `cms_signers`, `pkcs12_bags`, `pem_decode`) shred a single
-  literal/scalar blob into typed rows.
+  literal blob into typed rows.
 - The OID registry is assembled from permissive public sources (RustCrypto /
   IANA-style names); Gutmann's `dumpasn1.cfg` is **not** bundled — the `dumpasn1`
   dump *format* is reproduced, names come from the bundled registry only.

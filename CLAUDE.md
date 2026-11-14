@@ -32,6 +32,7 @@ crates/asn1-worker/                 thin Arrow/VGI adapter
   src/main.rs                       Worker::new(); catalog metadata; registers scalars + tables
   src/arrow_io.rs                   BLOB/VARCHAR reads; LIST<STRUCT>/STRUCT/LIST<BLOB> builders; test harness
   src/meta.rs                       vgi-lint discovery tags (object_tags / keywords_json / agent_test_tasks_json)
+  src/composed.rs                   composed (multi-object) example SQL constants; pinned verbatim by test/sql/composed.test
   src/scalar/{generic,security}.rs  scalar adapters (+ json_macro.rs for the JSON-returning decoders)
   src/table/*.rs                    producer table functions (pem_decode + the structural fan-outs)
 test/sql/*.test                     haybarn sqllogictest E2E (authoritative); fixtures via from_hex()
@@ -61,7 +62,8 @@ a thin Arrow marshaller.
 
 3. **Table functions take a LITERAL/scalar blob, not a LATERAL column.** The vgi
    extension's table-function binder rejects correlated `LATERAL f(t.col)`
-   columns ("only supports literals as parameters"), and `register_table_in_out`
+   columns ("only supports literals as parameters") and scalar subqueries
+   ("Table function cannot contain subqueries"), and `register_table_in_out`
    delivers the literal via `params.arguments` (not an input column) — reading
    `batch.column(0)` panics for a literal call. So the fan-outs are **producer
    `TableFunction`s** reading `const_blob(&args)` (position 0), exactly like

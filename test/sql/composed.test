@@ -1,0 +1,63 @@
+# name: test/sql/composed.test
+# group: [vgi_asn1]
+#
+# The composed example queries (crates/asn1-worker/src/composed.rs), run
+# verbatim: each combines two or more of the worker's objects. A cargo test
+# asserts every composed SQL constant appears byte-for-byte in this file, so the
+# published examples and the rows their descriptions claim cannot drift.
+
+require-env VGI_ASN1_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'asn1' AS asn1 (TYPE vgi, LOCATION '${VGI_ASN1_WORKER}');
+
+# --- PEM bundle triage: pem_decode -> well_formed + oids per block ---
+
+query IITII
+SELECT p.idx, p.label, (asn1.main.well_formed(p.der)).ok AS ok, (asn1.main.well_formed(p.der)).kind AS kind, len(asn1.main.oids(p.der)) AS n_oids FROM asn1.main.pem_decode('-----BEGIN PRIVATE KEY-----' || chr(10) || 'MBYCAQAwDQYJKoZIhvcNAQEBBQAEAmhp' || chr(10) || '-----END PRIVATE KEY-----' || chr(10) || '-----BEGIN PKCS7-----' || chr(10) || 'ME0CAQExADARBgkqhkiG9w0BBwGgBAQCaGmgBTADAgEFMSwwKgIBAYAEAQIDBDALBglghkgBZQMEAgEwDQYJKoZIhvcNAQEBBQAEA6q7zA==' || chr(10) || '-----END PKCS7-----' || chr(10) || '-----BEGIN CERTIFICATE-----' || chr(10) || 'MAUC' || chr(10) || '-----END CERTIFICATE-----') AS p ORDER BY p.idx;
+----
+0	PRIVATE KEY	true	NULL	1
+1	PKCS7	true	NULL	3
+2	CERTIFICATE	false	length-overflow	0
+
+# --- Keystore/message overlap: pkcs12_bags JOIN unnest(cms_certs) on SHA-256 ---
+
+query TT
+SELECT b.bag_type, b.cert_sha256 FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a03f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020105')) AS b JOIN (SELECT unnest(asn1.main.cms_certs(from_hex('304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc'))) AS cert) AS c ON sha256(c.cert) = b.cert_sha256 ORDER BY b.cert_sha256;
+----
+certBag	417c7763c4e320a6b747b3cb0c6d22f93741b29a32b48594b8eb4c144fe6d729
+
+# --- Signer algorithms -> dotted OIDs: cms_signers JOIN oid_registry ---
+
+query TTTT
+SELECT s.digest_alg, d.oid AS digest_oid, s.sig_alg, g.oid AS sig_oid FROM asn1.main.cms_signers(from_hex('304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc')) AS s LEFT JOIN asn1.main.oid_registry AS d ON d.name = s.digest_alg LEFT JOIN asn1.main.oid_registry AS g ON g.name = s.sig_alg ORDER BY s.signer_sid;
+----
+sha256	2.16.840.1.101.3.4.2.1	rsaEncryption	1.2.840.113549.1.1.1
+
+# --- Canonicalization proof: to_der checked with is_valid + decode ---
+
+query TTTT
+SELECT asn1.main.is_valid(b, 'der') AS der_before, hex(asn1.main.to_der(b)) AS der_hex, asn1.main.is_valid(asn1.main.to_der(b), 'der') AS der_after, asn1.main.decode(b) = asn1.main.decode(asn1.main.to_der(b)) AS same_value FROM (SELECT from_hex('3080040248690000') AS b) AS t;
+----
+false	300404024869	true	true
+
+# --- Agent-task graders (vgi-agent-tests.yaml) ---
+
+query T
+SELECT (asn1.main.pkcs8_info(p.der)).algorithm AS algorithm FROM asn1.main.pem_decode('-----BEGIN PKCS7-----' || chr(10) || 'ME0CAQExADARBgkqhkiG9w0BBwGgBAQCaGmgBTADAgEFMSwwKgIBAYAEAQIDBDALBglghkgBZQMEAgEwDQYJKoZIhvcNAQEBBQAEA6q7zA==' || chr(10) || '-----END PKCS7-----' || chr(10) || '-----BEGIN PRIVATE KEY-----' || chr(10) || 'MBYCAQAwDQYJKoZIhvcNAQEBBQAEAmhp' || chr(10) || '-----END PRIVATE KEY-----') AS p WHERE p.label = 'PRIVATE KEY'
+----
+rsaEncryption
+
+query I
+SELECT count(*) AS n FROM asn1.main.pkcs12_bags(from_hex('3051020103304c06092a864886f70d010701a03f043d303b303906092a864886f70d010701a02c042a30283026060b2a864886f70d010c0a0103a0173015060a2a864886f70d01091601a00704053003020105')) AS b WHERE b.cert_sha256 IN (SELECT sha256(unnest(asn1.main.cms_certs(from_hex('304d0201013100301106092a864886f70d010701a00404026869a0053003020105312c302a020101800401020304300b0609608648016503040201300d06092a864886f70d01010105000403aabbcc')))))
+----
+1
+
+statement ok
+USE memory;
+
+statement ok
+DETACH asn1;

@@ -106,15 +106,25 @@ impl TableFunction for Pkcs12Bags {
         ));
         tags.push((
             "vgi.example_queries".into(),
-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+            crate::meta::example_queries_json(&[
+                (ex_desc, ex_sql),
+                crate::composed::P12_CMS_CERT_MATCH,
+            ]),
         ));
         FunctionMetadata {
             description: "Walk a PKCS#12 keystore into one row per SafeBag".into(),
-            examples: vec![FunctionExample {
-                sql: ex_sql.into(),
-                description: ex_desc.into(),
-                expected_output: None,
-            }],
+            examples: vec![
+                FunctionExample {
+                    sql: ex_sql.into(),
+                    description: ex_desc.into(),
+                    expected_output: None,
+                },
+                FunctionExample {
+                    sql: crate::composed::P12_CMS_CERT_MATCH.1.into(),
+                    description: crate::composed::P12_CMS_CERT_MATCH.0.into(),
+                    expected_output: None,
+                },
+            ],
             tags,
             ..Default::default()
         }

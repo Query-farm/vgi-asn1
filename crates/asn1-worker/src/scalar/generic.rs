@@ -984,6 +984,10 @@ impl ScalarFunction for ToDer {
                               5 }` round-trips to the same bytes."
                         .into(),
                 expected_output: None,
+            }, FunctionExample {
+                sql: crate::composed::CANONICALIZE_CHECK.1.into(),
+                description: crate::composed::CANONICALIZE_CHECK.0.into(),
+                expected_output: None,
             }],
             tags: with_examples(
                 crate::meta::object_tags(
@@ -1002,7 +1006,7 @@ impl ScalarFunction for ToDer {
                     "Canonicalize a blob to DER; an already-canonical `SEQUENCE { INTEGER 5 }` \
                      round-trips to the same bytes.",
                     "SELECT asn1.main.to_der(from_hex('3003020105')) AS der;",
-                )],
+                ), crate::composed::CANONICALIZE_CHECK],
             ),
             ..Default::default()
         }
