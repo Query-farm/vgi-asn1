@@ -296,7 +296,13 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  are surfaced (algorithm OID + bytes) but never verified or decrypted, and PKCS#8/\
                  #12 never expose plaintext key material. Decoding is robust against hostile input: \
                  bounded recursion and allocation, and per-row error capture (`well_formed` \
-                 classifies the failure `kind`) so a malformed blob never aborts a scan."
+                 classifies the failure `kind`) so a malformed blob never aborts a scan.\n\n\
+                 ## Sources and references\n\n\
+                 - [ITU-T X.690](https://www.itu.int/rec/T-REC-X.690) — ASN.1 BER, CER and DER encoding rules\n\
+                 - [RFC 5652](https://www.rfc-editor.org/rfc/rfc5652) — Cryptographic Message Syntax (CMS / PKCS#7)\n\
+                 - [RFC 6960](https://www.rfc-editor.org/rfc/rfc6960) — OCSP\n\
+                 - [RFC 5958](https://www.rfc-editor.org/rfc/rfc5958) — PKCS#8 asymmetric key packages; [RFC 7292](https://www.rfc-editor.org/rfc/rfc7292) — PKCS#12\n\
+                 - [RFC 3416](https://www.rfc-editor.org/rfc/rfc3416) — SNMP PDUs; [RFC 4120](https://www.rfc-editor.org/rfc/rfc4120) — Kerberos V5; [RFC 4511](https://www.rfc-editor.org/rfc/rfc4511) — LDAP"
                     .to_string(),
             ),
             (
