@@ -267,18 +267,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.doc_llm".to_string(),
-                "Decode generic ASN.1 BER/CER/DER blobs and the named security/telecom modules \
-                 directly in SQL. Generic scalars: decode (to JSON), to_json (self-describing \
-                 JSON), dump (openssl/dumpasn1-style text), tlv (flat node list), at_path, oids \
-                 (OID inventory), oid_name/oid (registry lookup), is_valid / well_formed \
-                 (robust validation), to_der / reencode (canonicalize), pem_label. Structural \
-                 decoders: snmp_decode + snmp_varbinds, krb_decode + krb_ticket, ldap_decode + \
-                 ldap_messages, cms_decode + cms_signers + cms_certs + cms_content, pkcs8_info + \
-                 pkcs12_bags, ocsp_decode. cms_signers exposes signer_cert_sha256 to join to \
-                 vgi-x509. Every function is robust per row — a malformed blob yields an error \
-                 value / NULL, never crashing the scan — and no crypto is verified (structural \
-                 decode only). Use it to triage, inventory, and shred PKI/security binary \
-                 payloads at scale."
+                "Decode generic ASN.1 BER/CER/DER blobs (ITU-T X.690) and the security/telecom \
+                 modules layered on them (SNMP, Kerberos, LDAP, CMS/PKCS#7, PKCS#8/#12, OCSP) \
+                 directly in SQL. Two layers fit together: generic decode walks any blob into a \
+                 typed JSON tree, an openssl/dumpasn1-style text dump, a flat TLV node list, or \
+                 an OBJECT IDENTIFIER inventory, with validation and DER re-encoding alongside; \
+                 structural decoders shred the named modules into joinable rows and JSON \
+                 projections. Embedded certificates surface SHA-256 hashes so signed CMS and \
+                 PKCS#12 material joins to the vgi-x509 worker. Every function is robust per row \
+                 — a malformed blob yields an error value / NULL, never crashing the scan — and \
+                 no crypto is verified or decrypted (structural decode only). Use it to triage, \
+                 inventory, and shred PKI/security binary payloads at scale."
                     .to_string(),
             ),
             (
@@ -286,17 +285,16 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 "# asn1 — ASN.1 BER/DER Decoding & Security-Payload Shredding in SQL\n\n\
                  **Decode generic ASN.1 (BER/CER/DER) and the security/telecom modules that ride \
                  on it — SNMP, Kerberos, LDAP, CMS/PKCS#7, PKCS#8/#12, OCSP — directly in DuckDB \
-                 SQL.** Walk any DER blob into a typed JSON tree (`decode`/`to_json`), dump it \
-                 `openssl asn1parse`-style (`dump`), inventory every OBJECT IDENTIFIER (`oids`), \
-                 and shred the named modules into joinable rows (`cms_signers`, `snmp_varbinds`, \
-                 `ldap_messages`, …). The flagship pairing is **vgi-x509**: `cms_signers` and \
-                 `pkcs12_bags` surface `signer_cert_sha256` / `cert_sha256` so you can join \
-                 embedded certificates straight to cert metadata and revocation.\n\n\
+                 SQL.** Walk any DER blob into a typed JSON tree, dump it `openssl asn1parse`-style, \
+                 inventory every OBJECT IDENTIFIER, and shred the named modules into joinable \
+                 rows — signers, SNMP varbinds, LDAP messages, PKCS#12 bags. The flagship pairing \
+                 is **vgi-x509**: the CMS and PKCS#12 decoders surface embedded-certificate \
+                 SHA-256 hashes so you can join them straight to cert metadata and revocation.\n\n\
                  The worker is **structural-decode only** — signatures, MACs, and encrypted parts \
                  are surfaced (algorithm OID + bytes) but never verified or decrypted, and PKCS#8/\
                  #12 never expose plaintext key material. Decoding is robust against hostile input: \
-                 bounded recursion and allocation, and per-row error capture (`well_formed` \
-                 classifies the failure `kind`) so a malformed blob never aborts a scan.\n\n\
+                 bounded recursion and allocation, and per-row error capture (the validator \
+                 classifies the failure kind) so a malformed blob never aborts a scan.\n\n\
                  ## Sources and references\n\n\
                  - [ITU-T X.690](https://www.itu.int/rec/T-REC-X.690) — ASN.1 BER, CER and DER encoding rules\n\
                  - [RFC 5652](https://www.rfc-editor.org/rfc/rfc5652) — Cryptographic Message Syntax (CMS / PKCS#7)\n\
@@ -354,9 +352,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ("topic".to_string(), "asn1".to_string()),
                 (
                     "vgi.doc_llm".to_string(),
-                    "Generic ASN.1 BER/DER decode (decode, to_json, dump, tlv, oids, is_valid, \
-                     well_formed, to_der, reencode, pem_label) and structural decoders for SNMP, \
-                     Kerberos, LDAP, CMS/PKCS#7, PKCS#8/#12, and OCSP."
+                    "Every asn1 function: generic ASN.1 BER/DER decode (JSON tree, text dump, TLV \
+                     nodes, OID inventory), validation and DER re-encoding, and structural \
+                     decoders for SNMP, Kerberos, LDAP, CMS/PKCS#7, PKCS#8/#12, and OCSP. \
+                     Functions are grouped by category; malformed input yields an error value or \
+                     NULL per row, and nothing cryptographic is verified."
                         .to_string(),
                 ),
                 (
