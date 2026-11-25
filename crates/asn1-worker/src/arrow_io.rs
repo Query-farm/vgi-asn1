@@ -264,6 +264,7 @@ pub mod test_support {
             settings: Default::default(),
             secrets: Default::default(),
             auth_principal: None,
+            auth: Default::default(),
             projection_ids: None,
             pushdown_filters: None,
             join_keys: Vec::new(),
